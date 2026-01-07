@@ -1,0 +1,11 @@
+Model Information:
+* title:	JBL Tune 720BT
+* source:	https://sketchfab.com/3d-models/jbl-tune-720bt-9b5791b07d8b44deb46212ed450567e9
+* author:	polyman (https://sketchfab.com/Polyman_3D)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "JBL Tune 720BT" (https://sketchfab.com/3d-models/jbl-tune-720bt-9b5791b07d8b44deb46212ed450567e9) by polyman (https://sketchfab.com/Polyman_3D) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

@@ -1,0 +1,8 @@
+{
+  "name": "Digital Store E-commerce",
+  "description": "A high-end sneaker and apparel e-commerce application built with React, Tailwind CSS, and a focus on premium UI/UX design.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
