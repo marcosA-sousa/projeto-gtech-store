@@ -55,8 +55,8 @@ export const INITIAL_PRODUCTS: Product[] = [
 
 export const CATEGORIES = [
   { name: "Camisetas", icon: "Shirt" },
-  { name: "Calças", icon: "Pocket" },
-  { name: "Bonés", icon: "Zap" },
+  { name: "Calças", icon: "Drama" },
+  { name: "Bonés", icon: "HardHat" },
   { name: "Headphones", icon: "Headphones" },
   { name: "Tênis", icon: "Footprints" }
 ];

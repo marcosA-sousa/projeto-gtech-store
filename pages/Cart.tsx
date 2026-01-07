@@ -1,11 +1,11 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  ShoppingCart, Minus, Plus, Tag, Truck, X, CheckCircle, 
-  AlertCircle, MapPin, Loader2, Info, TrendingDown, 
-  CreditCard, QrCode, FileText, ChevronRight, Lock, 
-  ArrowRight, Check 
+import {
+  ShoppingCart, Minus, Plus, Tag, Truck, X, CheckCircle,
+  AlertCircle, MapPin, Loader2, Info, TrendingDown,
+  CreditCard, QrCode, FileText, ChevronRight, Lock,
+  ArrowRight, Check
 } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useProducts } from '../contexts/ProductContext';
@@ -15,9 +15,9 @@ import { Coupon } from '../types';
 const Cart: React.FC = () => {
   const navigate = useNavigate();
   const { items, removeItem, updateQuantity, subtotal, clearCart } = useCart();
-  const { coupons } = useProducts();
-  const { isLoggedIn } = useAuth();
-  
+  const { coupons, createOrder } = useProducts();
+  const { isLoggedIn, user } = useAuth();
+
   // Estados de Cupom
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
@@ -156,13 +156,41 @@ const Cart: React.FC = () => {
     setIsCheckoutModalOpen(true);
   };
 
-  const confirmPurchase = () => {
+  const confirmPurchase = async () => {
+    if (!paymentMethod || !user) return;
+
     setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
+
+    try {
+      await createOrder({
+        customerId: user.id || null,
+        customerName: user.name || user.email?.split('@')[0] || 'Cliente',
+        customerEmail: user.email || '',
+        total: totalFinalCheckout,
+        status: 'pending',
+        paymentMethod: paymentMethod,
+        shippingAddress: address ? `${address.logradouro}, ${address.bairro} - ${address.uf}` : 'Endereço não informado',
+        items: items.map(item => ({
+          id: item.id,
+          productId: item.productId,
+          name: item.name,
+          image: item.image,
+          price: item.price,
+          originalPrice: item.originalPrice,
+          color: item.color,
+          size: item.size,
+          quantity: item.quantity
+        }))
+      });
+
       setCheckoutStep('success');
       clearCart();
-    }, 2000);
+    } catch (error) {
+      console.error('Error creating order:', error);
+      alert('Houve um erro ao processar seu pedido. Tente novamente.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -229,11 +257,11 @@ const Cart: React.FC = () => {
                     {!appliedCoupon ? (
                       <div className="space-y-2">
                         <div className="flex gap-2">
-                          <input 
+                          <input
                             value={couponCode}
                             onChange={e => setCouponCode(e.target.value)}
-                            className="flex-grow bg-[#F5F5F5] dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-primary dark:text-white font-bold tracking-widest" 
-                            placeholder="CÓDIGO" 
+                            className="flex-grow bg-[#F5F5F5] dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-primary dark:text-white font-bold tracking-widest"
+                            placeholder="CÓDIGO"
                           />
                           <button onClick={handleApplyCoupon} className="bg-primary text-white font-bold px-6 py-3 rounded-xl text-sm shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95">OK</button>
                         </div>
@@ -257,7 +285,7 @@ const Cart: React.FC = () => {
                     <h4 className="font-bold text-gray-700 dark:text-gray-300 text-xs mb-4 flex items-center gap-2 uppercase tracking-widest">
                       <Truck className="w-4 h-4 text-primary" /> Frete e Entrega
                     </h4>
-                    <input 
+                    <input
                       value={cep}
                       onChange={e => setCep(e.target.value.replace(/\D/g, '').slice(0, 8))}
                       placeholder="CEP: 00000-000"
@@ -330,7 +358,7 @@ const Cart: React.FC = () => {
       {isCheckoutModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !isProcessing && setIsCheckoutModalOpen(false)} />
-          
+
           <div className="bg-white dark:bg-gray-900 w-full max-w-xl rounded-[40px] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300">
             {checkoutStep === 'selection' ? (
               <div className="p-8 md:p-10">
@@ -388,7 +416,7 @@ const Cart: React.FC = () => {
                   <div className="mb-6 animate-in slide-in-from-top-2">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Parcelamento</label>
                     <select value={installments} onChange={(e) => setInstallments(Number(e.target.value))} className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 dark:text-white focus:ring-2 focus:ring-[#C92071]">
-                      {[1,2,3,4,5,6,7,8,9,10,11,12].map(num => (
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(num => (
                         <option key={num} value={num}>{num}x de R$ {formatPrice(totalFinalCheckout / num)} {num === 1 ? '(À vista)' : 'sem juros'}</option>
                       ))}
                     </select>
@@ -425,9 +453,9 @@ const Cart: React.FC = () => {
                       <span>- R$ {formatPrice(pixDiscountAmount)}</span>
                     </div>
                   )}
-                  
+
                   <div className="h-px bg-gray-200 dark:bg-gray-700 my-4" />
-                  
+
                   <div className="flex items-end justify-between">
                     <div className="flex items-center gap-2 mb-1 opacity-60">
                       <Lock className="w-4 h-4 text-[#00CF82]" />

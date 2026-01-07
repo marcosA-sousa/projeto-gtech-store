@@ -25,7 +25,8 @@ import {
   Target,
   Tag,
   Percent,
-  Gift
+  Gift,
+  Edit
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useProducts } from '../contexts/ProductContext';
@@ -45,6 +46,7 @@ const AdminPanel: React.FC = () => {
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
   const [isHeroSlideModalOpen, setIsHeroSlideModalOpen] = useState(false);
   const [editingSlide, setEditingSlide] = useState<HeroSlide | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editingStockProductId, setEditingStockProductId] = useState<number | null>(null);
   const [editingStockValue, setEditingStockValue] = useState<number>(0);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
@@ -147,28 +149,59 @@ const AdminPanel: React.FC = () => {
     }
   }, [newProduct.originalPrice, discountPercent]);
 
-  // Lógica de Dashboard (Métricas Mockadas baseadas no inventário real)
+  // Lógica de Dashboard (Métricas Reais)
   const dashboardMetrics = useMemo(() => {
-    const totalInventoryValue = products.reduce((acc, p) => acc + p.price, 0);
+    // Filtrar pedidos válidos (não cancelados)
+    const validOrders = orders.filter(o => o.status !== 'cancelled');
+
+    // Faturamento Total
+    const revenue = validOrders.reduce((acc, order) => acc + order.total, 0);
+
+    // Total de Pedidos
+    const totalOrders = validOrders.length;
+
+    // Ticket Médio
+    const avgTicket = totalOrders > 0 ? revenue / totalOrders : 0;
+
+    // Contagem de categorias
     const categoryCount = CATEGORIES.map(cat => ({
       name: cat.name,
       count: products.filter(p => p.category === cat.name).length
     }));
 
-    // Simulação de performance
-    const topSellers = products.slice(0, 3).map(p => ({ ...p, sales: Math.floor(Math.random() * 50) + 20 }));
-    const lowSellers = products.slice(-3).map(p => ({ ...p, sales: Math.floor(Math.random() * 5) }));
+    // Calcular vendas por produto
+    const productSales = new Map<number, number>();
+
+    validOrders.forEach(order => {
+      order.items.forEach(item => {
+        const current = productSales.get(item.productId) || 0;
+        productSales.set(item.productId, current + item.quantity);
+      });
+    });
+
+    // Top Sellers (Mais vendidos)
+    const topSellers = products
+      .map(p => ({ ...p, sales: productSales.get(p.id) || 0 }))
+      .sort((a, b) => b.sales - a.sales)
+      .slice(0, 3);
+
+    // Low Sellers (Menos vendidos - mas que já tiveram pelo menos alguma venda ou 0)
+    // Mostramos os que têm menos vendas (limitado aos com 0 ou poucas vendas)
+    const lowSellers = products
+      .map(p => ({ ...p, sales: productSales.get(p.id) || 0 }))
+      .sort((a, b) => a.sales - b.sales)
+      .slice(0, 3);
 
     return {
-      revenue: totalInventoryValue * 12.5, // Simulação
-      totalOrders: 148,
-      avgTicket: (totalInventoryValue * 12.5) / 148,
-      conversionRate: 3.2,
+      revenue,
+      totalOrders,
+      avgTicket,
+      conversionRate: 3.2, // Mantido como estático por enquanto (necessitaria de analytics de visitas)
       categoryCount,
       topSellers,
       lowSellers
     };
-  }, [products]);
+  }, [products, orders]);
 
   const toggleSize = (size: string) => {
     setSelectedSizes(prev =>
@@ -193,41 +226,56 @@ const AdminPanel: React.FC = () => {
     }));
   };
 
-  const handleAddProduct = (e: React.FormEvent) => {
+  const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    const productToAdd: Product = {
-      id: Date.now(),
-      name: newProduct.name,
-      category: newProduct.category,
-      price: newProduct.price,
-      originalPrice: Number(newProduct.originalPrice),
-      image: newProduct.image || 'https://via.placeholder.com/400x400?text=Sem+Imagem',
-      images: newProduct.images,
-      discount: newProduct.discount,
-      description: newProduct.description,
-      availableSizes: selectedSizes,
-      stock: newProduct.stock
-    };
-    addProduct(productToAdd);
-    setToast({ message: 'Produto cadastrado com sucesso!', type: 'success' });
-    setIsProductModalOpen(false);
-    resetProductForm();
+    try {
+      const productData = {
+        name: newProduct.name,
+        category: newProduct.category,
+        price: newProduct.price,
+        originalPrice: Number(newProduct.originalPrice),
+        image: newProduct.image || 'https://via.placeholder.com/400x400?text=Sem+Imagem',
+        images: newProduct.images,
+        discount: newProduct.discount,
+        description: newProduct.description,
+        availableSizes: selectedSizes,
+        stock: newProduct.stock
+      };
+
+      if (editingProduct) {
+        await updateProduct({ ...productData, id: editingProduct.id });
+        setToast({ message: 'Produto atualizado com sucesso!', type: 'success' });
+      } else {
+        await addProduct(productData as any);
+        setToast({ message: 'Produto cadastrado com sucesso!', type: 'success' });
+      }
+
+      setIsProductModalOpen(false);
+      resetProductForm();
+    } catch (error) {
+      console.error(error);
+      setToast({ message: 'Erro ao salvar produto', type: 'error' });
+    }
   };
 
-  const handleAddCoupon = (e: React.FormEvent) => {
+  const handleAddCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
-    const couponToAdd: Coupon = {
-      id: Date.now(),
-      code: newCoupon.code.toUpperCase().trim(),
-      discountPercent: newCoupon.isFreeShipping ? 100 : (Number(newCoupon.discountPercent) || 0),
-      type: newCoupon.type,
-      isFreeShipping: newCoupon.type === 'shipping' ? newCoupon.isFreeShipping : false,
-      stackable: newCoupon.stackable
-    };
-    addCoupon(couponToAdd);
-    setToast({ message: 'Cupom criado com sucesso!', type: 'success' });
-    setIsCouponModalOpen(false);
-    setNewCoupon({ code: '', discountPercent: '', type: 'product', isFreeShipping: false, stackable: true });
+    try {
+      const couponToAdd: Coupon = {
+        id: Date.now(),
+        code: newCoupon.code.toUpperCase().trim(),
+        discountPercent: newCoupon.isFreeShipping ? 100 : (Number(newCoupon.discountPercent) || 0),
+        type: newCoupon.type,
+        isFreeShipping: newCoupon.type === 'shipping' ? newCoupon.isFreeShipping : false,
+        stackable: newCoupon.stackable
+      };
+      await addCoupon(couponToAdd);
+      setToast({ message: 'Cupom criado com sucesso!', type: 'success' });
+      setIsCouponModalOpen(false);
+      setNewCoupon({ code: '', discountPercent: '', type: 'product', isFreeShipping: false, stackable: true });
+    } catch (error) {
+      setToast({ message: 'Erro ao criar cupom', type: 'error' });
+    }
   };
 
   const resetProductForm = () => {
@@ -245,12 +293,42 @@ const AdminPanel: React.FC = () => {
     setDiscountPercent('');
     setExtraImageUrl('');
     setSelectedSizes(getSizesForCategory(CATEGORIES[0].name));
+    setEditingProduct(null);
   };
 
-  const handleDeleteProduct = (id: number) => {
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setNewProduct({
+      name: product.name,
+      category: product.category,
+      price: product.price,
+      originalPrice: product.originalPrice.toString(),
+      image: product.image,
+      images: product.images || [],
+      description: product.description || '',
+      discount: product.discount || '',
+      stock: product.stock || 0
+    });
+
+    // Extrair porcentagem do desconto se houver
+    if (product.discount && product.discount.includes('%')) {
+      setDiscountPercent(product.discount.replace('% OFF', ''));
+    } else {
+      setDiscountPercent('');
+    }
+
+    setSelectedSizes(product.availableSizes || getSizesForCategory(product.category));
+    setIsProductModalOpen(true);
+  };
+
+  const handleDeleteProduct = async (id: number) => {
     if (window.confirm('Excluir produto definitivamente?')) {
-      deleteProduct(id);
-      setToast({ message: 'Produto removido do estoque.', type: 'success' });
+      try {
+        await deleteProduct(id);
+        setToast({ message: 'Produto removido do estoque.', type: 'success' });
+      } catch (error) {
+        setToast({ message: 'Erro ao remover produto', type: 'error' });
+      }
     }
   };
 
@@ -259,11 +337,15 @@ const AdminPanel: React.FC = () => {
     setEditingStockValue(product.stock || 0);
   };
 
-  const handleSaveStock = (product: Product) => {
-    const updatedProduct = { ...product, stock: editingStockValue };
-    updateProduct(updatedProduct);
-    setEditingStockProductId(null);
-    setToast({ message: 'Estoque atualizado com sucesso!', type: 'success' });
+  const handleSaveStock = async (product: Product) => {
+    try {
+      const updatedProduct = { ...product, stock: editingStockValue };
+      await updateProduct(updatedProduct);
+      setEditingStockProductId(null);
+      setToast({ message: 'Estoque atualizado com sucesso!', type: 'success' });
+    } catch (error) {
+      setToast({ message: 'Erro ao atualizar estoque', type: 'error' });
+    }
   };
 
   const handleCancelEditStock = () => {
@@ -271,30 +353,38 @@ const AdminPanel: React.FC = () => {
     setEditingStockValue(0);
   };
 
-  const handleDeleteCoupon = (id: number) => {
+  const handleDeleteCoupon = async (id: number) => {
     if (window.confirm('Remover este cupom de desconto?')) {
-      deleteCoupon(id);
-      setToast({ message: 'Cupom removido com sucesso.', type: 'success' });
+      try {
+        await deleteCoupon(id);
+        setToast({ message: 'Cupom removido com sucesso.', type: 'success' });
+      } catch (error) {
+        setToast({ message: 'Erro ao remover cupom', type: 'error' });
+      }
     }
   };
 
-  const handleAddHeroSlide = (e: React.FormEvent) => {
+  const handleAddHeroSlide = async (e: React.FormEvent) => {
     e.preventDefault();
-    const slideToAdd: HeroSlide = {
-      id: Date.now(),
-      ...newHeroSlide
-    };
-    
-    if (editingSlide) {
-      updateHeroSlide({ ...slideToAdd, id: editingSlide.id });
-      setToast({ message: 'Slide atualizado com sucesso!', type: 'success' });
-    } else {
-      addHeroSlide(slideToAdd);
-      setToast({ message: 'Slide adicionado ao carrossel!', type: 'success' });
+    try {
+      const slideToAdd: HeroSlide = {
+        id: Date.now(),
+        ...newHeroSlide
+      };
+
+      if (editingSlide) {
+        await updateHeroSlide({ ...slideToAdd, id: editingSlide.id });
+        setToast({ message: 'Slide atualizado com sucesso!', type: 'success' });
+      } else {
+        await addHeroSlide(slideToAdd);
+        setToast({ message: 'Slide adicionado ao carrossel!', type: 'success' });
+      }
+
+      setIsHeroSlideModalOpen(false);
+      resetHeroSlideForm();
+    } catch (error) {
+      setToast({ message: 'Erro ao gerenciar slide', type: 'error' });
     }
-    
-    setIsHeroSlideModalOpen(false);
-    resetHeroSlideForm();
   };
 
   const resetHeroSlideForm = () => {
@@ -326,10 +416,14 @@ const AdminPanel: React.FC = () => {
     setIsHeroSlideModalOpen(true);
   };
 
-  const handleDeleteSlide = (id: number) => {
+  const handleDeleteSlide = async (id: number) => {
     if (window.confirm('Remover este slide do carrossel?')) {
-      deleteHeroSlide(id);
-      setToast({ message: 'Slide removido com sucesso.', type: 'success' });
+      try {
+        await deleteHeroSlide(id);
+        setToast({ message: 'Slide removido com sucesso.', type: 'success' });
+      } catch (error) {
+        setToast({ message: 'Erro ao remover slide', type: 'error' });
+      }
     }
   };
 
@@ -790,40 +884,38 @@ const AdminPanel: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="mt-4 flex gap-2">
-                        {order.status === 'pending' && (
-                          <button
-                            onClick={() => updateOrderStatus(order.id, 'processing')}
-                            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all"
-                          >
-                            Processar Pedido
-                          </button>
-                        )}
-                        {order.status === 'processing' && (
-                          <button
-                            onClick={() => updateOrderStatus(order.id, 'shipped')}
-                            className="flex-1 bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all"
-                          >
-                            Marcar como Enviado
-                          </button>
-                        )}
-                        {order.status === 'shipped' && (
-                          <button
-                            onClick={() => updateOrderStatus(order.id, 'delivered')}
-                            className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all"
-                          >
-                            Marcar como Entregue
-                          </button>
-                        )}
-                        {order.status !== 'cancelled' && order.status !== 'delivered' && (
-                          <button
-                            onClick={() => updateOrderStatus(order.id, 'cancelled')}
-                            className="px-4 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 rounded-lg text-xs font-bold transition-all"
-                          >
-                            Cancelar
-                          </button>
-                        )}
-                      </div>
+                      {order.status === 'pending' && (
+                        <button
+                          onClick={() => updateOrderStatus(order.id, 'processing')}
+                          className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all"
+                        >
+                          Processar Pedido
+                        </button>
+                      )}
+                      {order.status === 'processing' && (
+                        <button
+                          onClick={() => updateOrderStatus(order.id, 'shipped')}
+                          className="flex-1 bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all"
+                        >
+                          Marcar como Enviado
+                        </button>
+                      )}
+                      {order.status === 'shipped' && (
+                        <button
+                          onClick={() => updateOrderStatus(order.id, 'delivered')}
+                          className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all"
+                        >
+                          Marcar como Entregue
+                        </button>
+                      )}
+                      {order.status !== 'cancelled' && order.status !== 'delivered' && (
+                        <button
+                          onClick={() => updateOrderStatus(order.id, 'cancelled')}
+                          className="flex-1 px-4 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 rounded-lg text-xs font-bold transition-all"
+                        >
+                          Cancelar
+                        </button>
+                      )}
                     </div>
                   );
                 })}
@@ -835,7 +927,7 @@ const AdminPanel: React.FC = () => {
                 )}
               </div>
             </div>
-          </div>
+          </div >
         ) : (
           /* VIEW INVENTÁRIO (ANTIGA) */
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -907,11 +999,10 @@ const AdminPanel: React.FC = () => {
                             </div>
                           ) : (
                             <div className="flex items-center gap-2">
-                              <span className={`text-sm font-black ${
-                                (product.stock || 0) === 0 ? 'text-red-500' : 
-                                (product.stock || 0) < 10 ? 'text-orange-500' : 
-                                'text-green-500'
-                              }`}>
+                              <span className={`text-sm font-black ${(product.stock || 0) === 0 ? 'text-red-500' :
+                                (product.stock || 0) < 10 ? 'text-orange-500' :
+                                  'text-green-500'
+                                }`}>
                                 {product.stock || 0}
                               </span>
                               <span className="text-[10px] text-gray-400 font-bold uppercase">un</span>
@@ -942,6 +1033,13 @@ const AdminPanel: React.FC = () => {
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
+                            <button
+                              onClick={() => handleEditProduct(product)}
+                              title="Editar Produto Completo"
+                              className="p-3 bg-gray-50 dark:bg-gray-800 hover:bg-orange-500 hover:text-white text-orange-500 rounded-xl transition-all"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -956,6 +1054,12 @@ const AdminPanel: React.FC = () => {
                 <h2 className="text-xl font-bold text-gray-800 dark:text-white">Cupons Ativos</h2>
               </div>
               <div className="p-4 space-y-2">
+                {coupons.length === 0 && (
+                  <div className="text-center py-8 text-gray-400">
+                    <Tag className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                    <p className="text-xs font-bold uppercase tracking-widest">Sem cupons ativos</p>
+                  </div>
+                )}
                 {coupons.map(coupon => (
                   <div key={coupon.id} className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-2xl transition-all group">
                     <div className="flex items-center gap-3">
@@ -984,329 +1088,339 @@ const AdminPanel: React.FC = () => {
             </div>
           </div>
         )}
-      </div>
+      </div >
 
       {/* MODAL PRODUTO */}
-      {isProductModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsProductModalOpen(false)} />
-          <div className="bg-white dark:bg-gray-900 w-full max-w-4xl rounded-[40px] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="flex justify-between items-center p-10 border-b dark:border-gray-800">
-              <h2 className="text-3xl font-black text-gray-800 dark:text-white uppercase tracking-tighter">Cadastrar Novo Item</h2>
-              <button onClick={() => setIsProductModalOpen(false)} className="p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"><X className="w-6 h-6 text-gray-400" /></button>
-            </div>
-            <form onSubmit={handleAddProduct} className="p-10 max-h-[70vh] overflow-y-auto custom-scrollbar">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                <div className="space-y-8">
-                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Nome Comercial</label>
-                    <input required value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-bold" placeholder="Ex: Tênis Nike Air Max" />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-6">
+      {
+        isProductModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsProductModalOpen(false)} />
+            <div className="bg-white dark:bg-gray-900 w-full max-w-4xl rounded-[40px] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300">
+              <div className="flex justify-between items-center p-10 border-b dark:border-gray-800">
+                <h2 className="text-3xl font-black text-gray-800 dark:text-white uppercase tracking-tighter">
+                  {editingProduct ? 'Editar Produto' : 'Cadastrar Novo Item'}
+                </h2>
+                <button onClick={() => setIsProductModalOpen(false)} className="p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"><X className="w-6 h-6 text-gray-400" /></button>
+              </div>
+              <form onSubmit={handleAddProduct} className="p-10 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                  <div className="space-y-8">
                     <div>
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Categoria</label>
-                      <select value={newProduct.category} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-bold">
-                        {CATEGORIES.map(cat => <option key={cat.name} value={cat.name}>{cat.name}</option>)}
-                      </select>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Nome Comercial</label>
+                      <input required value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-bold" placeholder="Ex: Tênis Nike Air Max" />
                     </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Categoria</label>
+                        <select value={newProduct.category} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-bold">
+                          {CATEGORIES.map(cat => <option key={cat.name} value={cat.name}>{cat.name}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Preço de Tabela (R$)</label>
+                        <input required type="number" value={newProduct.originalPrice} onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })} className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-bold" />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Desconto Direto (%)</label>
+                        <input type="number" value={discountPercent} onChange={e => setDiscountPercent(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-bold" />
+                      </div>
+                      <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10 flex flex-col justify-center">
+                        <span className="text-[9px] font-black text-primary uppercase tracking-widest mb-1">Preço Sugerido</span>
+                        <span className="text-xl font-black dark:text-white">R$ {newProduct.price.toLocaleString()},00</span>
+                      </div>
+                    </div>
+
                     <div>
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Preço de Tabela (R$)</label>
-                      <input required type="number" value={newProduct.originalPrice} onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })} className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-bold" />
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Quantidade em Estoque</label>
+                      <input
+                        required
+                        type="number"
+                        min="0"
+                        value={newProduct.stock}
+                        onChange={e => setNewProduct({ ...newProduct, stock: Number(e.target.value) })}
+                        className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-bold"
+                        placeholder="Ex: 50"
+                      />
+                      <p className="text-xs text-gray-400 mt-2">Unidades disponíveis para venda</p>
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-6">
                     <div>
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Desconto Direto (%)</label>
-                      <input type="number" value={discountPercent} onChange={e => setDiscountPercent(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-bold" />
-                    </div>
-                    <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10 flex flex-col justify-center">
-                      <span className="text-[9px] font-black text-primary uppercase tracking-widest mb-1">Preço Sugerido</span>
-                      <span className="text-xl font-black dark:text-white">R$ {newProduct.price.toLocaleString()},00</span>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 block">Grade em Estoque ({newProduct.category})</label>
+                      <div className="flex flex-wrap gap-3">
+                        {currentSizeOptions.map(size => (
+                          <button
+                            key={size}
+                            type="button"
+                            onClick={() => toggleSize(size)}
+                            className={`min-w-[48px] h-12 px-3 rounded-xl border-2 text-xs font-black transition-all ${selectedSizes.includes(size) ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'border-gray-100 dark:border-gray-800 text-gray-400 dark:bg-gray-800'}`}
+                          >
+                            {size}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Quantidade em Estoque</label>
-                    <input 
-                      required 
-                      type="number" 
-                      min="0"
-                      value={newProduct.stock} 
-                      onChange={e => setNewProduct({ ...newProduct, stock: Number(e.target.value) })} 
-                      className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-bold" 
-                      placeholder="Ex: 50"
-                    />
-                    <p className="text-xs text-gray-400 mt-2">Unidades disponíveis para venda</p>
-                  </div>
+                  <div className="space-y-8">
+                    <div>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Capa Principal (URL)</label>
+                      <input required value={newProduct.image} onChange={e => setNewProduct({ ...newProduct, image: e.target.value })} className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white" placeholder="https://..." />
+                    </div>
 
-                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 block">Grade em Estoque ({newProduct.category})</label>
-                    <div className="flex flex-wrap gap-3">
-                      {currentSizeOptions.map(size => (
+                    <div>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Galeria Adicional (URL)</label>
+                      <div className="flex gap-3">
+                        <input
+                          value={extraImageUrl}
+                          onChange={e => setExtraImageUrl(e.target.value)}
+                          className="flex-grow bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white"
+                          placeholder="Link da imagem..."
+                        />
                         <button
-                          key={size}
                           type="button"
-                          onClick={() => toggleSize(size)}
-                          className={`min-w-[48px] h-12 px-3 rounded-xl border-2 text-xs font-black transition-all ${selectedSizes.includes(size) ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'border-gray-100 dark:border-gray-800 text-gray-400 dark:bg-gray-800'}`}
+                          onClick={addExtraImage}
+                          className="bg-gray-800 dark:bg-gray-700 text-white p-4 rounded-2xl hover:bg-gray-950 transition-all shadow-xl"
                         >
-                          {size}
+                          <PlusCircle className="w-6 h-6" />
                         </button>
-                      ))}
+                      </div>
+                    </div>
+
+                    {newProduct.images.length > 0 && (
+                      <div className="grid grid-cols-4 gap-3">
+                        {newProduct.images.map((img, i) => (
+                          <div key={i} className="relative aspect-square bg-gray-50 dark:bg-gray-800 rounded-2xl overflow-hidden group border dark:border-gray-700">
+                            <img src={img} className="w-full h-full object-contain p-2 mix-blend-multiply dark:mix-blend-normal" />
+                            <button
+                              type="button"
+                              onClick={() => removeExtraImage(i)}
+                              className="absolute inset-0 bg-red-500/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="p-8 bg-gray-50 dark:bg-gray-800 rounded-[32px] border-2 border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center min-h-[200px]">
+                      <div className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-4">Preview em Tempo Real</div>
+                      {newProduct.image ? <img src={newProduct.image} className="max-w-full max-h-40 object-contain mix-blend-multiply dark:mix-blend-normal" /> : <ImageIcon className="w-16 h-16 text-gray-200" />}
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-8">
-                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Capa Principal (URL)</label>
-                    <input required value={newProduct.image} onChange={e => setNewProduct({ ...newProduct, image: e.target.value })} className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white" placeholder="https://..." />
-                  </div>
+                <div className="mt-16 flex gap-6">
+                  <button type="button" onClick={() => setIsProductModalOpen(false)} className="flex-grow py-5 font-bold text-gray-400 hover:text-gray-600 transition-colors">Cancelar</button>
+                  <button type="submit" className="flex-[3] bg-primary text-white py-5 rounded-[24px] font-black uppercase tracking-[0.2em] text-sm shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                    {editingProduct ? 'Salvar Alterações' : 'Ativar Produto na Loja'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
 
-                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Galeria Adicional (URL)</label>
-                    <div className="flex gap-3">
-                      <input
-                        value={extraImageUrl}
-                        onChange={e => setExtraImageUrl(e.target.value)}
-                        className="flex-grow bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white"
-                        placeholder="Link da imagem..."
-                      />
+      {/* MODAL CUPOM */}
+      {
+        isCouponModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsCouponModalOpen(false)} />
+            <div className="bg-white dark:bg-gray-900 w-full max-w-md rounded-[40px] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300">
+              <div className="p-10 border-b dark:border-gray-800 flex justify-between items-center">
+                <h2 className="text-2xl font-black text-gray-800 dark:text-white uppercase tracking-tighter">Gerar Promoção</h2>
+                <button onClick={() => setIsCouponModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full"><X className="w-6 h-6 text-gray-400" /></button>
+              </div>
+              <form onSubmit={handleAddCoupon} className="p-10 space-y-8">
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Tipo do Cupom</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setNewCoupon({ ...newCoupon, type: 'product', isFreeShipping: false })}
+                      className={`flex flex-col items-center gap-2 p-5 rounded-[24px] border-2 transition-all ${newCoupon.type === 'product' ? 'border-primary bg-primary/5 text-primary' : 'border-gray-100 dark:border-gray-800 text-gray-400'}`}
+                    >
+                      <Target className="w-6 h-6" />
+                      <span className="text-[10px] font-black uppercase">Carrinho</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNewCoupon({ ...newCoupon, type: 'shipping' })}
+                      className={`flex flex-col items-center gap-2 p-5 rounded-[24px] border-2 transition-all ${newCoupon.type === 'shipping' ? 'border-blue-500 bg-blue-500/5 text-blue-500' : 'border-gray-100 dark:border-gray-800 text-gray-400'}`}
+                    >
+                      <Truck className="w-6 h-6" />
+                      <span className="text-[10px] font-black uppercase">Entrega</span>
+                    </button>
+                  </div>
+                </div>
+
+                {newCoupon.type === 'shipping' && (
+                  <div className="animate-in slide-in-from-top-2 duration-300">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Modo de Entrega</label>
+                    <div className="grid grid-cols-2 gap-3">
                       <button
                         type="button"
-                        onClick={addExtraImage}
-                        className="bg-gray-800 dark:bg-gray-700 text-white p-4 rounded-2xl hover:bg-gray-950 transition-all shadow-xl"
+                        onClick={() => setNewCoupon({ ...newCoupon, isFreeShipping: false })}
+                        className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all text-[10px] font-black uppercase ${!newCoupon.isFreeShipping ? 'border-blue-500 bg-blue-500/10 text-blue-600' : 'border-gray-100 dark:border-gray-800 text-gray-400'}`}
                       >
-                        <PlusCircle className="w-6 h-6" />
+                        <Percent className="w-3.5 h-3.5" />
+                        Desconto %
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewCoupon({ ...newCoupon, isFreeShipping: true, discountPercent: '100' })}
+                        className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all text-[10px] font-black uppercase ${newCoupon.isFreeShipping ? 'border-green-500 bg-green-500/10 text-green-600' : 'border-gray-100 dark:border-gray-800 text-gray-400'}`}
+                      >
+                        <Gift className="w-3.5 h-3.5" />
+                        Frete Grátis
                       </button>
                     </div>
                   </div>
+                )}
 
-                  {newProduct.images.length > 0 && (
-                    <div className="grid grid-cols-4 gap-3">
-                      {newProduct.images.map((img, i) => (
-                        <div key={i} className="relative aspect-square bg-gray-50 dark:bg-gray-800 rounded-2xl overflow-hidden group border dark:border-gray-700">
-                          <img src={img} className="w-full h-full object-contain p-2 mix-blend-multiply dark:mix-blend-normal" />
-                          <button
-                            type="button"
-                            onClick={() => removeExtraImage(i)}
-                            className="absolute inset-0 bg-red-500/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </div>
-                      ))}
+                <div className="animate-in fade-in duration-300">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Código Alfa</label>
+                  <input required value={newCoupon.code} onChange={e => setNewCoupon({ ...newCoupon, code: e.target.value.toUpperCase() })} placeholder="EX: SUMMER2025" className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 font-black tracking-widest dark:text-white focus:ring-2 focus:ring-primary" />
+                </div>
+
+                {!newCoupon.isFreeShipping && (
+                  <div className="animate-in slide-in-from-top-2 duration-300">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Porcentagem de Redução</label>
+                    <div className="relative">
+                      <input required type="number" min="1" max="100" value={newCoupon.discountPercent} onChange={e => setNewCoupon({ ...newCoupon, discountPercent: e.target.value })} className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 dark:text-white font-black focus:ring-2 focus:ring-primary" placeholder="Ex: 15" />
+                      <span className="absolute right-5 top-1/2 -translate-y-1/2 font-black text-gray-400">%</span>
                     </div>
-                  )}
-
-                  <div className="p-8 bg-gray-50 dark:bg-gray-800 rounded-[32px] border-2 border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center min-h-[200px]">
-                    <div className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-4">Preview em Tempo Real</div>
-                    {newProduct.image ? <img src={newProduct.image} className="max-w-full max-h-40 object-contain mix-blend-multiply dark:mix-blend-normal" /> : <ImageIcon className="w-16 h-16 text-gray-200" />}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-16 flex gap-6">
-                <button type="button" onClick={() => setIsProductModalOpen(false)} className="flex-grow py-5 font-bold text-gray-400 hover:text-gray-600 transition-colors">Cancelar</button>
-                <button type="submit" className="flex-[3] bg-primary text-white py-5 rounded-[24px] font-black uppercase tracking-[0.2em] text-sm shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all">Ativar Produto na Loja</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL CUPOM */}
-      {isCouponModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsCouponModalOpen(false)} />
-          <div className="bg-white dark:bg-gray-900 w-full max-w-md rounded-[40px] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="p-10 border-b dark:border-gray-800 flex justify-between items-center">
-              <h2 className="text-2xl font-black text-gray-800 dark:text-white uppercase tracking-tighter">Gerar Promoção</h2>
-              <button onClick={() => setIsCouponModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full"><X className="w-6 h-6 text-gray-400" /></button>
-            </div>
-            <form onSubmit={handleAddCoupon} className="p-10 space-y-8">
-              <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Tipo do Cupom</label>
-                <div className="grid grid-cols-2 gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setNewCoupon({ ...newCoupon, type: 'product', isFreeShipping: false })}
-                    className={`flex flex-col items-center gap-2 p-5 rounded-[24px] border-2 transition-all ${newCoupon.type === 'product' ? 'border-primary bg-primary/5 text-primary' : 'border-gray-100 dark:border-gray-800 text-gray-400'}`}
-                  >
-                    <Target className="w-6 h-6" />
-                    <span className="text-[10px] font-black uppercase">Carrinho</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setNewCoupon({ ...newCoupon, type: 'shipping' })}
-                    className={`flex flex-col items-center gap-2 p-5 rounded-[24px] border-2 transition-all ${newCoupon.type === 'shipping' ? 'border-blue-500 bg-blue-500/5 text-blue-500' : 'border-gray-100 dark:border-gray-800 text-gray-400'}`}
-                  >
-                    <Truck className="w-6 h-6" />
-                    <span className="text-[10px] font-black uppercase">Entrega</span>
-                  </button>
-                </div>
-              </div>
-
-              {newCoupon.type === 'shipping' && (
-                <div className="animate-in slide-in-from-top-2 duration-300">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Modo de Entrega</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setNewCoupon({ ...newCoupon, isFreeShipping: false })}
-                      className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all text-[10px] font-black uppercase ${!newCoupon.isFreeShipping ? 'border-blue-500 bg-blue-500/10 text-blue-600' : 'border-gray-100 dark:border-gray-800 text-gray-400'}`}
-                    >
-                      <Percent className="w-3.5 h-3.5" />
-                      Desconto %
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setNewCoupon({ ...newCoupon, isFreeShipping: true, discountPercent: '100' })}
-                      className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all text-[10px] font-black uppercase ${newCoupon.isFreeShipping ? 'border-green-500 bg-green-500/10 text-green-600' : 'border-gray-100 dark:border-gray-800 text-gray-400'}`}
-                    >
-                      <Gift className="w-3.5 h-3.5" />
-                      Frete Grátis
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <div className="animate-in fade-in duration-300">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Código Alfa</label>
-                <input required value={newCoupon.code} onChange={e => setNewCoupon({ ...newCoupon, code: e.target.value.toUpperCase() })} placeholder="EX: SUMMER2025" className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 font-black tracking-widest dark:text-white focus:ring-2 focus:ring-primary" />
-              </div>
-
-              {!newCoupon.isFreeShipping && (
-                <div className="animate-in slide-in-from-top-2 duration-300">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Porcentagem de Redução</label>
-                  <div className="relative">
-                    <input required type="number" min="1" max="100" value={newCoupon.discountPercent} onChange={e => setNewCoupon({ ...newCoupon, discountPercent: e.target.value })} className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 dark:text-white font-black focus:ring-2 focus:ring-primary" placeholder="Ex: 15" />
-                    <span className="absolute right-5 top-1/2 -translate-y-1/2 font-black text-gray-400">%</span>
-                  </div>
-                </div>
-              )}
-
-              <div className="pt-4 flex gap-6">
-                <button type="button" onClick={() => setIsCouponModalOpen(false)} className="flex-grow py-4 font-bold text-gray-400 hover:text-gray-600 transition-colors">Voltar</button>
-                <button type="submit" className={`flex-[2] text-white py-4 rounded-[20px] font-black uppercase tracking-widest text-xs shadow-xl transition-all active:scale-95 ${newCoupon.type === 'shipping' ? (newCoupon.isFreeShipping ? 'bg-green-500 shadow-green-500/30' : 'bg-blue-500 shadow-blue-500/30') : 'bg-orange-500 shadow-orange-500/30'}`}>
-                  {newCoupon.isFreeShipping ? 'Publicar Frete Grátis' : 'Publicar Cupom'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL HERO SLIDE */}
-      {isHeroSlideModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => { setIsHeroSlideModalOpen(false); resetHeroSlideForm(); }} />
-          <div className="bg-white dark:bg-gray-900 w-full max-w-2xl rounded-[40px] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="p-10 border-b dark:border-gray-800 flex justify-between items-center">
-              <h2 className="text-2xl font-black text-gray-800 dark:text-white uppercase tracking-tighter">
-                {editingSlide ? 'Editar Slide' : 'Novo Slide Hero'}
-              </h2>
-              <button onClick={() => { setIsHeroSlideModalOpen(false); resetHeroSlideForm(); }} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
-                <X className="w-6 h-6 text-gray-400" />
-              </button>
-            </div>
-            <form onSubmit={handleAddHeroSlide} className="p-10 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
-              <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Tag/Etiqueta</label>
-                <input 
-                  required 
-                  value={newHeroSlide.tag} 
-                  onChange={e => setNewHeroSlide({ ...newHeroSlide, tag: e.target.value })} 
-                  className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-bold" 
-                  placeholder="Ex: Melhores ofertas personalizadas" 
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Título Principal</label>
-                <input 
-                  required 
-                  value={newHeroSlide.title} 
-                  onChange={e => setNewHeroSlide({ ...newHeroSlide, title: e.target.value })} 
-                  className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-bold" 
-                  placeholder="Ex: Queima de stoque Nike 🔥" 
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Descrição</label>
-                <textarea 
-                  required 
-                  value={newHeroSlide.description} 
-                  onChange={e => setNewHeroSlide({ ...newHeroSlide, description: e.target.value })} 
-                  className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-medium resize-none" 
-                  rows={3}
-                  placeholder="Descrição do slide" 
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Texto do Botão</label>
-                  <input 
-                    required 
-                    value={newHeroSlide.buttonText} 
-                    onChange={e => setNewHeroSlide({ ...newHeroSlide, buttonText: e.target.value })} 
-                    className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-bold" 
-                    placeholder="Ex: Ver Ofertas" 
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Link do Botão</label>
-                  <input 
-                    required 
-                    value={newHeroSlide.buttonLink} 
-                    onChange={e => setNewHeroSlide({ ...newHeroSlide, buttonLink: e.target.value })} 
-                    className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-bold" 
-                    placeholder="Ex: /produtos" 
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">URL da Imagem do Tênis</label>
-                <input 
-                  required 
-                  type="url"
-                  value={newHeroSlide.image} 
-                  onChange={e => setNewHeroSlide({ ...newHeroSlide, image: e.target.value })} 
-                  className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-medium" 
-                  placeholder="https://..." 
-                />
-                {newHeroSlide.image && (
-                  <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                    <p className="text-xs text-gray-400 font-bold mb-2">Preview:</p>
-                    <img src={newHeroSlide.image} alt="Preview" className="w-32 h-32 object-contain mx-auto" />
                   </div>
                 )}
-              </div>
 
-              <div className="pt-4 flex gap-6">
-                <button 
-                  type="button" 
-                  onClick={() => { setIsHeroSlideModalOpen(false); resetHeroSlideForm(); }} 
-                  className="flex-grow py-4 font-bold text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="submit" 
-                  className="flex-[2] bg-primary hover:bg-primary-hover text-white py-4 rounded-[20px] font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/30 transition-all active:scale-95"
-                >
-                  {editingSlide ? 'Atualizar Slide' : 'Adicionar Slide'}
+                <div className="pt-4 flex gap-6">
+                  <button type="button" onClick={() => setIsCouponModalOpen(false)} className="flex-grow py-4 font-bold text-gray-400 hover:text-gray-600 transition-colors">Voltar</button>
+                  <button type="submit" className={`flex-[2] text-white py-4 rounded-[20px] font-black uppercase tracking-widest text-xs shadow-xl transition-all active:scale-95 ${newCoupon.type === 'shipping' ? (newCoupon.isFreeShipping ? 'bg-green-500 shadow-green-500/30' : 'bg-blue-500 shadow-blue-500/30') : 'bg-orange-500 shadow-orange-500/30'}`}>
+                    {newCoupon.isFreeShipping ? 'Publicar Frete Grátis' : 'Publicar Cupom'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {/* MODAL HERO SLIDE */}
+      {
+        isHeroSlideModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => { setIsHeroSlideModalOpen(false); resetHeroSlideForm(); }} />
+            <div className="bg-white dark:bg-gray-900 w-full max-w-2xl rounded-[40px] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300">
+              <div className="p-10 border-b dark:border-gray-800 flex justify-between items-center">
+                <h2 className="text-2xl font-black text-gray-800 dark:text-white uppercase tracking-tighter">
+                  {editingSlide ? 'Editar Slide' : 'Novo Slide Hero'}
+                </h2>
+                <button onClick={() => { setIsHeroSlideModalOpen(false); resetHeroSlideForm(); }} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+                  <X className="w-6 h-6 text-gray-400" />
                 </button>
               </div>
-            </form>
+              <form onSubmit={handleAddHeroSlide} className="p-10 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Tag/Etiqueta</label>
+                  <input
+                    required
+                    value={newHeroSlide.tag}
+                    onChange={e => setNewHeroSlide({ ...newHeroSlide, tag: e.target.value })}
+                    className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-bold"
+                    placeholder="Ex: Melhores ofertas personalizadas"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Título Principal</label>
+                  <input
+                    required
+                    value={newHeroSlide.title}
+                    onChange={e => setNewHeroSlide({ ...newHeroSlide, title: e.target.value })}
+                    className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-bold"
+                    placeholder="Ex: Queima de stoque Nike 🔥"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Descrição</label>
+                  <textarea
+                    required
+                    value={newHeroSlide.description}
+                    onChange={e => setNewHeroSlide({ ...newHeroSlide, description: e.target.value })}
+                    className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-medium resize-none"
+                    rows={3}
+                    placeholder="Descrição do slide"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Texto do Botão</label>
+                    <input
+                      required
+                      value={newHeroSlide.buttonText}
+                      onChange={e => setNewHeroSlide({ ...newHeroSlide, buttonText: e.target.value })}
+                      className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-bold"
+                      placeholder="Ex: Ver Ofertas"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Link do Botão</label>
+                    <input
+                      required
+                      value={newHeroSlide.buttonLink}
+                      onChange={e => setNewHeroSlide({ ...newHeroSlide, buttonLink: e.target.value })}
+                      className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-bold"
+                      placeholder="Ex: /produtos"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">URL da Imagem do Tênis</label>
+                  <input
+                    required
+                    type="url"
+                    value={newHeroSlide.image}
+                    onChange={e => setNewHeroSlide({ ...newHeroSlide, image: e.target.value })}
+                    className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-medium"
+                    placeholder="https://..."
+                  />
+                  {newHeroSlide.image && (
+                    <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                      <p className="text-xs text-gray-400 font-bold mb-2">Preview:</p>
+                      <img src={newHeroSlide.image} alt="Preview" className="w-32 h-32 object-contain mx-auto" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-4 flex gap-6">
+                  <button
+                    type="button"
+                    onClick={() => { setIsHeroSlideModalOpen(false); resetHeroSlideForm(); }}
+                    className="flex-grow py-4 font-bold text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-[2] bg-primary hover:bg-primary-hover text-white py-4 rounded-[20px] font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/30 transition-all active:scale-95"
+                  >
+                    {editingSlide ? 'Atualizar Slide' : 'Adicionar Slide'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 

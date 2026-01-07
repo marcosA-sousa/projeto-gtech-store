@@ -55,7 +55,7 @@ export interface CartItem {
 }
 
 export interface Customer {
-  id: number;
+  id: number | string;
   name: string;
   email: string;
   phone?: string;
@@ -68,7 +68,7 @@ export interface Customer {
 
 export interface Order {
   id: number;
-  customerId: number;
+  customerId: number | string | null;
   customerName: string;
   customerEmail: string;
   items: CartItem[];

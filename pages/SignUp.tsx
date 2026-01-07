@@ -1,9 +1,29 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Store, ArrowLeft } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const SignUp: React.FC = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [birthdate, setBirthdate] = useState('');
+  const { signUp } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { error } = await signUp(email, password, name, birthdate);
+
+    if (error) {
+      alert(error.message || 'Erro ao criar conta');
+    } else {
+      alert('Conta criada com sucesso! Verifique seu email se necessário.');
+      navigate('/login');
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#F9F8FE] dark:bg-gray-950 transition-colors">
       <header className="py-6 container mx-auto px-4 lg:px-20">
@@ -28,17 +48,52 @@ const SignUp: React.FC = () => {
               <p className="text-sm text-gray-400 mb-8">
                 Já possui uma conta? Entre <Link to="/login" className="underline text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">aqui</Link>.
               </p>
-              
-              <form className="space-y-5">
+
+              <form onSubmit={handleSignUp} className="space-y-5">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Email *</label>
-                  <input 
-                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary transition-all outline-none" 
-                    placeholder="Insira seu email" 
-                    type="email" 
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Nome Completo *</label>
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary transition-all outline-none"
+                    placeholder="Seu nome completo"
+                    type="text"
+                    required
                   />
                 </div>
-                <button className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-primary/30 uppercase tracking-widest text-sm" type="button">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Data de Nascimento *</label>
+                  <input
+                    value={birthdate}
+                    onChange={(e) => setBirthdate(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary transition-all outline-none"
+                    type="date"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Email *</label>
+                  <input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary transition-all outline-none"
+                    placeholder="Insira seu email"
+                    type="email"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Senha *</label>
+                  <input
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary transition-all outline-none"
+                    placeholder="Insira sua senha"
+                    type="password"
+                    required
+                  />
+                </div>
+                <button className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-primary/30 uppercase tracking-widest text-sm" type="submit">
                   Criar Conta
                 </button>
               </form>
@@ -55,10 +110,10 @@ const SignUp: React.FC = () => {
           </div>
 
           <div className="hidden lg:flex relative h-[600px] w-full items-center justify-center">
-            <img 
-              alt="Top sneaker" 
-              className="absolute top-0 right-10 w-64 object-contain transform -rotate-12 drop-shadow-2xl z-10 animate-float mix-blend-multiply dark:mix-blend-normal" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0qUckuxwdzXpMc8JjQJ5XF8DV6huFa5CUUKqqHRKl1D1AJwxfHDUNfDN52UdeOnxqEpOdMUxPBzAY0tzTey7PYGWtJu3Q_jgC1ZkLe8XROenYliYWsiJ--u0Qa7JG8PXapNyaCvuWEhFTui5Ki030q5dFnF8Fsv-lnqsw5hjjiuX9WSh47QgNICfpNkCsgfP5HbBjFQp9sHFDbuXR2q9QYUE108va57KyHDARnAjMlWyHvFUONoq_tPSDw2T02ypsHuzSDhZ1WkM" 
+            <img
+              alt="Top sneaker"
+              className="absolute top-0 right-10 w-64 object-contain transform -rotate-12 drop-shadow-2xl z-10 animate-float mix-blend-multiply dark:mix-blend-normal"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0qUckuxwdzXpMc8JjQJ5XF8DV6huFa5CUUKqqHRKl1D1AJwxfHDUNfDN52UdeOnxqEpOdMUxPBzAY0tzTey7PYGWtJu3Q_jgC1ZkLe8XROenYliYWsiJ--u0Qa7JG8PXapNyaCvuWEhFTui5Ki030q5dFnF8Fsv-lnqsw5hjjiuX9WSh47QgNICfpNkCsgfP5HbBjFQp9sHFDbuXR2q9QYUE108va57KyHDARnAjMlWyHvFUONoq_tPSDw2T02ypsHuzSDhZ1WkM"
             />
           </div>
         </div>

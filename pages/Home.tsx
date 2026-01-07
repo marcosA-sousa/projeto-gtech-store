@@ -104,13 +104,13 @@ AVAILABLE_MODELS.forEach(model => {
 // Componente para limpar recursos do WebGL quando o Canvas é desmontado
 const ResourceCleanup: React.FC = () => {
   const { gl } = useThree();
-  
+
   useEffect(() => {
     return () => {
       gl.dispose();
     };
   }, [gl]);
-  
+
   return null;
 };
 
@@ -146,14 +146,14 @@ const SneakerModel: React.FC<{
       // Começa com o tamanho correto para evitar o modelo aparecer pequeno
       groupRef.current.scale.set(scale, scale, scale);
       setIsReady(true);
-      
+
       // Pequeno delay para callback de carregamento
       const timer = requestAnimationFrame(() => {
         if (groupRef.current) {
           onLoaded?.();
         }
       });
-      
+
       return () => cancelAnimationFrame(timer);
     }
   }, [modelId, scale, clonedScene, onLoaded]);
@@ -225,7 +225,7 @@ const Sneaker3DView: React.FC<{ currentModel: typeof AVAILABLE_MODELS[0]; modelK
           </div>
         </div>
       )}
-      
+
       <div className="w-full h-full cursor-grab active:cursor-grabbing">
         <ModelErrorBoundary onRetry={retry} key={`error-${modelKey}-${retryKey}`}>
           <Canvas
@@ -267,9 +267,9 @@ const Sneaker3DView: React.FC<{ currentModel: typeof AVAILABLE_MODELS[0]; modelK
               <ContactShadows position={[0, -0.8, 0]} opacity={0.4} scale={10} blur={2.5} far={4} />
             </Suspense>
             <Environment preset="city" />
-            <OrbitControls 
-              enableZoom={false} 
-              minPolarAngle={Math.PI / 3} 
+            <OrbitControls
+              enableZoom={false}
+              minPolarAngle={Math.PI / 3}
               maxPolarAngle={Math.PI / 1.5}
               enableDamping
               dampingFactor={0.05}
@@ -289,7 +289,9 @@ const Home: React.FC = () => {
   const { products, heroSlides } = useProducts();
   const [currentModelIndex, setCurrentModelIndex] = useState(0);
   const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => {
+    return !sessionStorage.getItem('hasSeenPreloader');
+  });
   const [isFading, setIsFading] = useState(false);
   const currentModel = AVAILABLE_MODELS[currentModelIndex];
   const currentSlide = heroSlides[currentHeroSlide] || heroSlides[0];
@@ -308,7 +310,10 @@ const Home: React.FC = () => {
   }, [heroSlides.length]);
 
   if (isLoading) {
-    return <Preloader onLoadComplete={() => setIsLoading(false)} />;
+    return <Preloader onLoadComplete={() => {
+      setIsLoading(false);
+      sessionStorage.setItem('hasSeenPreloader', 'true');
+    }} />;
   }
 
   const nextModel = () => {
@@ -356,19 +361,19 @@ const Home: React.FC = () => {
             <p className="text-gray-500 dark:text-gray-400 text-lg mb-8 max-w-md mx-auto lg:mx-0 leading-relaxed">
               {currentSlide.description}
             </p>
-            <Link 
-              to={currentSlide.buttonLink} 
+            <Link
+              to={currentSlide.buttonLink}
               className="bg-primary hover:bg-primary-hover text-white px-10 py-3 rounded-lg font-bold text-base transition-transform transform hover:scale-105 shadow-xl shadow-primary/30 inline-block"
             >
               {currentSlide.buttonText}
             </Link>
           </div>
           <div className={`lg:w-1/2 relative flex justify-center lg:justify-center transition-all duration-300 ${isFading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-            <img 
+            <img
               key={currentSlide.id}
-              alt={currentSlide.title} 
-              className="w-full max-w-[500px] object-contain animate-float drop-shadow-2xl mix-blend-multiply dark:mix-blend-normal rounded-3xl" 
-              src={currentSlide.image} 
+              alt={currentSlide.title}
+              className="w-full max-w-[500px] object-contain animate-float drop-shadow-2xl mix-blend-multiply dark:mix-blend-normal rounded-3xl"
+              src={currentSlide.image}
             />
           </div>
         </div>
@@ -379,11 +384,10 @@ const Home: React.FC = () => {
             <button
               key={index}
               onClick={() => goToHeroSlide(index)}
-              className={`transition-all rounded-full ${
-                index === currentHeroSlide 
-                  ? 'w-8 h-3 bg-primary' 
-                  : 'w-3 h-3 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
-              }`}
+              className={`transition-all rounded-full ${index === currentHeroSlide
+                ? 'w-8 h-3 bg-primary'
+                : 'w-3 h-3 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
+                }`}
               aria-label={`Ir para slide ${index + 1}`}
             />
           ))}
@@ -394,17 +398,17 @@ const Home: React.FC = () => {
         <div className="container mx-auto px-4 lg:px-12 flex flex-col md:flex-row items-center gap-16">
           <div className="md:w-1/2 relative flex justify-center min-h-[400px]">
             <Sneaker3DView currentModel={currentModel} modelKey={currentModel.id} />
-            
+
             {/* Botões de navegação */}
-            <button 
+            <button
               onClick={prevModel}
               className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white dark:bg-gray-800 shadow-xl flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-all hover:scale-110 active:scale-95 border border-gray-200 dark:border-gray-700"
               aria-label="Modelo anterior"
             >
               <LucideIcons.ChevronLeft className="w-6 h-6 text-gray-700 dark:text-white" />
             </button>
-            
-            <button 
+
+            <button
               onClick={nextModel}
               className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white dark:bg-gray-800 shadow-xl flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-all hover:scale-110 active:scale-95 border border-gray-200 dark:border-gray-700"
               aria-label="Próximo modelo"
@@ -418,11 +422,10 @@ const Home: React.FC = () => {
                 <button
                   key={index}
                   onClick={() => goToModel(index)}
-                  className={`transition-all rounded-full ${
-                    index === currentModelIndex 
-                      ? 'w-8 h-2 bg-primary' 
-                      : 'w-2 h-2 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
-                  }`}
+                  className={`transition-all rounded-full ${index === currentModelIndex
+                    ? 'w-8 h-2 bg-primary'
+                    : 'w-2 h-2 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
+                    }`}
                   aria-label={`Ir para modelo ${index + 1}`}
                 />
               ))}
@@ -442,8 +445,8 @@ const Home: React.FC = () => {
               {currentModel.description}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-              <Link 
-                to="/produtos" 
+              <Link
+                to="/produtos"
                 className="bg-primary hover:bg-primary-hover text-white px-10 py-3 rounded-lg font-bold text-sm transition-transform transform hover:scale-105 shadow-lg shadow-primary/30 inline-block"
               >
                 Ver Coleção Completa
@@ -452,7 +455,7 @@ const Home: React.FC = () => {
                 Saiba Mais
               </button>
             </div>
-            
+
             {/* Contador de modelos */}
             <div className="mt-8 flex items-center gap-2 text-gray-400 dark:text-gray-500 text-sm justify-center md:justify-start">
               <span className="font-bold text-primary text-lg">{currentModelIndex + 1}</span>
@@ -469,7 +472,7 @@ const Home: React.FC = () => {
           <h3 className="text-xl font-bold text-[#474747] dark:text-gray-200 mb-12">Categorias em destaque</h3>
           <div className="flex flex-wrap justify-center gap-8 md:gap-14">
             {CATEGORIES.map((cat, idx) => {
-              // Mapeamento do nome para o arquivo de imagem
+              // Mapeamento do nome para o arquivo de imagem na pasta public/icons
               const iconMap: Record<string, string> = {
                 'Camisetas': '/icons/camisa.png',
                 'Calças': '/icons/calca.png',
@@ -478,6 +481,7 @@ const Home: React.FC = () => {
                 'Tênis': '/icons/tenis.png',
               };
               const iconSrc = iconMap[cat.name] || '/icons/camisa.png';
+
               return (
                 <Link key={idx} to={`/produtos?categoria=${cat.name}`} className="group flex flex-col items-center gap-4 transition-all">
                   <div className="w-24 h-24 rounded-full bg-white dark:bg-gray-800 shadow-[0_4px_25px_rgba(0,0,0,0.05)] dark:shadow-2xl flex items-center justify-center transition-all group-hover:shadow-xl group-hover:-translate-y-2 dark:border dark:border-gray-700">

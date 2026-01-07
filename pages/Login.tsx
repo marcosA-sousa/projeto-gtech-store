@@ -10,16 +10,18 @@ const Login: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (email === 'admin' && password === 'admin') {
-      login(email, 'admin');
-      navigate('/admin');
-    } else {
-      login(email || 'usuario@digitalstore.com', 'user');
-      navigate('/meus-pedidos');
+
+    const { error } = await login(email, password);
+
+    if (error) {
+      alert(error.message || 'Erro ao fazer login');
+      return;
     }
+
+    // Redireciona para home após login bem-sucedido
+    navigate('/');
   };
 
   return (
@@ -46,27 +48,27 @@ const Login: React.FC = () => {
               <p className="text-sm text-gray-400 mb-8">
                 Tente <span className="font-bold text-primary">admin/admin</span> para o painel de controle.
               </p>
-              
+
               <form onSubmit={handleLogin} className="space-y-5">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Email ou Login *</label>
-                  <input 
+                  <input
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
-                    placeholder="admin" 
-                    type="text" 
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                    placeholder="admin"
+                    type="text"
                     required
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Senha *</label>
-                  <input 
+                  <input
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" 
-                    placeholder="admin" 
-                    type="password" 
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                    placeholder="admin"
+                    type="password"
                     required
                   />
                 </div>
@@ -88,10 +90,10 @@ const Login: React.FC = () => {
           </div>
 
           <div className="hidden lg:flex relative justify-center items-center h-full min-h-[500px]">
-             <img 
-              alt="Admin Sneaker" 
-              className="w-full max-w-md object-contain drop-shadow-[0_35px_35px_rgba(0,0,0,0.25)] animate-float" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8lMnOhP0xlawlbrMpfcvLNdLW1rJB9xdp52K8RlHHPyABCN5-MaOhMzOE2BUr4iuiRlmZ03KOsr2y-UvRf8qmNHrhpwBFABoGvf3JpWhdwB_Ya9UoWRvN5o7v55XCLCrsalaLla3KJcJDffXoVp7vsA7XD5bMwTfmPqLPpqnanq76SUH3uz6KF3auCDWxA8IeHidH9YvdIBuQPi8l825k_lC1kAguVuIjnN8BBU5TjUWMPIyGpucWYe2OhG3a0nqlm_-IKQL78h4" 
+            <img
+              alt="Admin Sneaker"
+              className="w-full max-w-md object-contain drop-shadow-[0_35px_35px_rgba(0,0,0,0.25)] animate-float"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8lMnOhP0xlawlbrMpfcvLNdLW1rJB9xdp52K8RlHHPyABCN5-MaOhMzOE2BUr4iuiRlmZ03KOsr2y-UvRf8qmNHrhpwBFABoGvf3JpWhdwB_Ya9UoWRvN5o7v55XCLCrsalaLla3KJcJDffXoVp7vsA7XD5bMwTfmPqLPpqnanq76SUH3uz6KF3auCDWxA8IeHidH9YvdIBuQPi8l825k_lC1kAguVuIjnN8BBU5TjUWMPIyGpucWYe2OhG3a0nqlm_-IKQL78h4"
             />
           </div>
         </div>

@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { Product, Coupon, HeroSlide, Customer, Order } from '../types';
+import { supabase } from '../lib/supabase';
 import { INITIAL_PRODUCTS } from '../constants';
 
 interface ProductContextType {
@@ -9,16 +10,18 @@ interface ProductContextType {
   heroSlides: HeroSlide[];
   customers: Customer[];
   orders: Order[];
-  addProduct: (product: Product) => void;
-  updateProduct: (product: Product) => void;
-  deleteProduct: (id: number) => void;
-  addCoupon: (coupon: Coupon) => void;
-  deleteCoupon: (id: number) => void;
+  loading: boolean;
+  addProduct: (product: Product) => Promise<void>;
+  updateProduct: (product: Product) => Promise<void>;
+  deleteProduct: (id: number) => Promise<void>;
+  addCoupon: (coupon: Coupon) => Promise<void>;
+  deleteCoupon: (id: number) => Promise<void>;
   getProductById: (id: number) => Product | undefined;
-  addHeroSlide: (slide: HeroSlide) => void;
-  updateHeroSlide: (slide: HeroSlide) => void;
-  deleteHeroSlide: (id: number) => void;
-  updateOrderStatus: (orderId: number, status: Order['status']) => void;
+  addHeroSlide: (slide: HeroSlide) => Promise<void>;
+  updateHeroSlide: (slide: HeroSlide) => Promise<void>;
+  deleteHeroSlide: (id: number) => Promise<void>;
+  updateOrderStatus: (orderId: number, status: Order['status']) => Promise<void>;
+  createOrder: (order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
 }
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
@@ -49,223 +52,413 @@ const INITIAL_HERO_SLIDES: HeroSlide[] = [
 ];
 
 export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [products, setProducts] = useState<Product[]>(() => {
-    const saved = localStorage.getItem('digital_store_products');
-    return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
-  });
+  const [products, setProducts] = useState<Product[]>([]);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [coupons, setCoupons] = useState<Coupon[]>(() => {
-    const saved = localStorage.getItem('digital_store_coupons');
-    return saved ? JSON.parse(saved) : [
-      { id: 1, code: 'BEMVINDO', discountPercent: 10, stackable: true }
-    ];
-  });
+  const loadData = async () => {
+    try {
+      // Load products
+      const { data: productsData, error: productsError } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-  const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(() => {
-    const saved = localStorage.getItem('digital_store_hero_slides');
-    return saved ? JSON.parse(saved) : INITIAL_HERO_SLIDES;
-  });
+      if (productsError) throw productsError;
 
-  const [customers, setCustomers] = useState<Customer[]>(() => {
-    const saved = localStorage.getItem('digital_store_customers');
-    return saved ? JSON.parse(saved) : [
-      {
-        id: 1,
-        name: 'João Silva',
-        email: 'joao.silva@email.com',
-        phone: '(11) 98765-4321',
-        cpf: '123.456.789-00',
-        registeredAt: '2025-12-15',
-        totalOrders: 3,
-        totalSpent: 2847.70,
-        lastOrderDate: '2026-01-05'
-      },
-      {
-        id: 2,
-        name: 'Maria Santos',
-        email: 'maria.santos@email.com',
-        phone: '(21) 99876-5432',
-        cpf: '987.654.321-00',
-        registeredAt: '2025-11-20',
-        totalOrders: 5,
-        totalSpent: 4532.50,
-        lastOrderDate: '2026-01-06'
-      },
-      {
-        id: 3,
-        name: 'Pedro Costa',
-        email: 'pedro.costa@email.com',
-        phone: '(11) 91234-5678',
-        registeredAt: '2026-01-02',
-        totalOrders: 1,
-        totalSpent: 899.90,
-        lastOrderDate: '2026-01-02'
+      // Seed if empty
+      if (!productsData || productsData.length === 0) {
+        for (const product of INITIAL_PRODUCTS) {
+          await supabase.from('products').insert({
+            name: product.name,
+            category: product.category,
+            price: product.price,
+            original_price: product.originalPrice,
+            image: product.image,
+            images: product.images || [],
+            discount: product.discount,
+            description: product.description,
+            available_sizes: product.availableSizes || [],
+            stock: product.stock || 0
+          });
+        }
+        const { data: reloadedProducts } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+        setProducts(mapProductsFromDB(reloadedProducts || []));
+      } else {
+        setProducts(mapProductsFromDB(productsData));
       }
-    ];
-  });
 
-  const [orders, setOrders] = useState<Order[]>(() => {
-    const saved = localStorage.getItem('digital_store_orders');
-    return saved ? JSON.parse(saved) : [
-      {
-        id: 1001,
-        customerId: 1,
-        customerName: 'João Silva',
-        customerEmail: 'joao.silva@email.com',
-        items: [
-          {
-            id: '1-42-Branco',
-            productId: 1,
-            name: 'Nike Air Max 2023',
-            image: 'https://via.placeholder.com/100',
-            price: 899.90,
-            originalPrice: 1299.90,
-            color: 'Branco',
-            size: '42',
-            quantity: 1
-          }
-        ],
-        total: 899.90,
-        status: 'processing',
-        paymentMethod: 'Cartão de Crédito',
-        shippingAddress: 'Rua das Flores, 123 - São Paulo/SP',
-        createdAt: '2026-01-05T14:30:00',
-        updatedAt: '2026-01-05T14:30:00'
-      },
-      {
-        id: 1002,
-        customerId: 2,
-        customerName: 'Maria Santos',
-        customerEmail: 'maria.santos@email.com',
-        items: [
-          {
-            id: '2-M-Preto',
-            productId: 2,
-            name: 'Camiseta Adidas',
-            image: 'https://via.placeholder.com/100',
-            price: 149.90,
-            originalPrice: 199.90,
-            color: 'Preto',
-            size: 'M',
-            quantity: 2
-          }
-        ],
-        total: 299.80,
-        status: 'shipped',
-        paymentMethod: 'PIX',
-        shippingAddress: 'Av. Paulista, 1000 - Rio de Janeiro/RJ',
-        createdAt: '2026-01-04T10:15:00',
-        updatedAt: '2026-01-06T09:00:00'
-      },
-      {
-        id: 1003,
-        customerId: 3,
-        customerName: 'Pedro Costa',
-        customerEmail: 'pedro.costa@email.com',
-        items: [
-          {
-            id: '1-40-Preto',
-            productId: 1,
-            name: 'Nike Air Max 2023',
-            image: 'https://via.placeholder.com/100',
-            price: 899.90,
-            originalPrice: 1299.90,
-            color: 'Preto',
-            size: '40',
-            quantity: 1
-          }
-        ],
-        total: 899.90,
-        status: 'pending',
-        paymentMethod: 'Boleto',
-        shippingAddress: 'Rua dos Pinheiros, 456 - São Paulo/SP',
-        createdAt: '2026-01-02T16:45:00',
-        updatedAt: '2026-01-02T16:45:00'
+      // Load coupons
+      const { data: couponsData } = await supabase.from('coupons').select('*').eq('active', true);
+      setCoupons(mapCouponsFromDB(couponsData || []));
+
+      // Load hero slides
+      const { data: slidesData } = await supabase.from('hero_slides').select('*').eq('active', true).order('position', { ascending: true });
+      if (!slidesData || slidesData.length === 0) {
+        for (const slide of INITIAL_HERO_SLIDES) {
+          await supabase.from('hero_slides').insert({
+            tag: slide.tag, title: slide.title, description: slide.description,
+            button_text: slide.buttonText, button_link: slide.buttonLink,
+            image: slide.image, bg_color: slide.bgColor, bg_dark: slide.bgDark, position: slide.id
+          });
+        }
+        const { data: rs } = await supabase.from('hero_slides').select('*').eq('active', true).order('position', { ascending: true });
+        setHeroSlides(mapHeroSlidesFromDB(rs || []));
+      } else {
+        setHeroSlides(mapHeroSlidesFromDB(slidesData));
       }
-    ];
-  });
 
-  useEffect(() => {
-    localStorage.setItem('digital_store_products', JSON.stringify(products));
-  }, [products]);
+      // Load orders with items
+      const { data: ordersData } = await supabase.from('orders').select('*, order_items (*)').order('created_at', { ascending: false });
+      const mappedOrders = mapOrdersFromDB(ordersData || []);
+      setOrders(mappedOrders);
 
-  useEffect(() => {
-    localStorage.setItem('digital_store_coupons', JSON.stringify(coupons));
-  }, [coupons]);
-
-  useEffect(() => {
-    localStorage.setItem('digital_store_hero_slides', JSON.stringify(heroSlides));
-  }, [heroSlides]);
-
-  useEffect(() => {
-    localStorage.setItem('digital_store_customers', JSON.stringify(customers));
-  }, [customers]);
-
-  useEffect(() => {
-    localStorage.setItem('digital_store_orders', JSON.stringify(orders));
-  }, [orders]);
-
-  const addProduct = (product: Product) => {
-    setProducts(prev => [product, ...prev]);
+      // Load customers
+      const { data: usersData } = await supabase.rpc('get_users_for_admin');
+      if (usersData) {
+        const mappedCustomers = usersData.map((user: any) => {
+          const userOrders = mappedOrders.filter(o => o.customerEmail === user.email);
+          const totalSpent = userOrders.reduce((acc, curr) => acc + curr.total, 0);
+          return {
+            id: user.id,
+            name: user.raw_user_meta_data?.name || user.email.split('@')[0],
+            email: user.email,
+            registeredAt: new Date(user.created_at).toLocaleDateString(),
+            totalOrders: userOrders.length,
+            totalSpent: totalSpent,
+            status: 'active'
+          };
+        });
+        setCustomers(mappedCustomers);
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateProduct = (product: Product) => {
-    setProducts(prev => prev.map(p => p.id === product.id ? product : p));
+  useEffect(() => {
+    loadData();
+
+    const sub = supabase.channel('schema-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => loadData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => loadData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'coupons' }, () => loadData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'hero_slides' }, () => loadData())
+      .subscribe();
+
+    return () => { sub.unsubscribe(); };
+  }, []);
+
+  // Mapping functions
+  const mapProductsFromDB = (data: any[]): Product[] => {
+    return data.map(p => ({
+      id: p.id,
+      name: p.name,
+      category: p.category,
+      price: parseFloat(p.price),
+      originalPrice: parseFloat(p.original_price),
+      discount: p.discount || '',
+      image: p.image,
+      images: p.images || [],
+      description: p.description,
+      availableSizes: p.available_sizes || [],
+      stock: p.stock || 0
+    }));
   };
 
-  const deleteProduct = (id: number) => {
-    setProducts(prev => prev.filter(p => p.id !== id));
+  const mapCouponsFromDB = (data: any[]): Coupon[] => {
+    return data.map(c => ({
+      id: c.id,
+      code: c.code,
+      discountPercent: parseFloat(c.discount_percent),
+      type: c.type,
+      isFreeShipping: c.is_free_shipping,
+      stackable: c.stackable
+    }));
   };
 
-  const addCoupon = (coupon: Coupon) => {
-    setCoupons(prev => [coupon, ...prev]);
+  const mapHeroSlidesFromDB = (data: any[]): HeroSlide[] => {
+    return data.map(s => ({
+      id: s.id,
+      tag: s.tag || '',
+      title: s.title,
+      description: s.description || '',
+      buttonText: s.button_text,
+      buttonLink: s.button_link,
+      image: s.image,
+      bgColor: s.bg_color,
+      bgDark: s.bg_dark
+    }));
   };
 
-  const deleteCoupon = (id: number) => {
-    setCoupons(prev => prev.filter(c => c.id !== id));
+  const mapOrdersFromDB = (data: any[]): Order[] => {
+    return data.map(o => ({
+      id: o.id,
+      customerId: o.user_id || 0,
+      customerName: o.customer_name,
+      customerEmail: o.customer_email,
+      items: (o.order_items || []).map((item: any) => ({
+        id: `${item.product_id}-${item.size}-${item.color}`,
+        productId: item.product_id,
+        name: item.name,
+        image: item.image,
+        price: parseFloat(item.price),
+        originalPrice: parseFloat(item.price),
+        color: item.color || 'Padrão',
+        size: item.size || 'Único',
+        quantity: item.quantity
+      })),
+      total: parseFloat(o.total),
+      status: o.status,
+      paymentMethod: o.payment_method,
+      shippingAddress: o.shipping_address,
+      createdAt: o.created_at,
+      updatedAt: o.updated_at
+    }));
+  };
+
+  // CRUD operations
+  const addProduct = async (product: Product) => {
+    const { error } = await supabase.from('products').insert({
+      name: product.name,
+      category: product.category,
+      price: product.price,
+      original_price: product.originalPrice,
+      image: product.image,
+      images: product.images || [],
+      discount: product.discount,
+      description: product.description,
+      available_sizes: product.availableSizes || [],
+      stock: product.stock || 0
+    });
+
+    if (error) {
+      console.error('Error adding product:', error);
+      throw error;
+    }
+
+    await loadData();
+  };
+
+  const updateProduct = async (product: Product) => {
+    const { error } = await supabase
+      .from('products')
+      .update({
+        name: product.name,
+        category: product.category,
+        price: product.price,
+        original_price: product.originalPrice,
+        image: product.image,
+        images: product.images || [],
+        discount: product.discount,
+        description: product.description,
+        available_sizes: product.availableSizes || [],
+        stock: product.stock || 0,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', product.id);
+
+    if (error) {
+      console.error('Error updating product:', error);
+      throw error;
+    }
+
+    await loadData();
+  };
+
+  const deleteProduct = async (id: number) => {
+    const { error } = await supabase.from('products').delete().eq('id', id);
+
+    if (error) {
+      console.error('Error deleting product:', error);
+      throw error;
+    }
+
+    await loadData();
+  };
+
+  const addCoupon = async (coupon: Coupon) => {
+    const { error } = await supabase.from('coupons').insert({
+      code: coupon.code,
+      discount_percent: coupon.discountPercent,
+      type: coupon.type,
+      is_free_shipping: coupon.isFreeShipping,
+      stackable: coupon.stackable,
+      active: true
+    });
+
+    if (error) {
+      console.error('Error adding coupon:', error);
+      throw error;
+    }
+
+    await loadData();
+  };
+
+  const deleteCoupon = async (id: number) => {
+    const { error } = await supabase.from('coupons').delete().eq('id', id);
+
+    if (error) {
+      console.error('Error deleting coupon:', error);
+      throw error;
+    }
+
+    await loadData();
   };
 
   const getProductById = (id: number) => {
     return products.find(p => p.id === id);
   };
 
-  const addHeroSlide = (slide: HeroSlide) => {
-    setHeroSlides(prev => [...prev, slide]);
+  const addHeroSlide = async (slide: HeroSlide) => {
+    const { error } = await supabase.from('hero_slides').insert({
+      tag: slide.tag,
+      title: slide.title,
+      description: slide.description,
+      button_text: slide.buttonText,
+      button_link: slide.buttonLink,
+      image: slide.image,
+      bg_color: slide.bgColor,
+      bg_dark: slide.bgDark,
+      position: heroSlides.length
+    });
+
+    if (error) {
+      console.error('Error adding hero slide:', error);
+      throw error;
+    }
+
+    await loadData();
   };
 
-  const updateHeroSlide = (slide: HeroSlide) => {
-    setHeroSlides(prev => prev.map(s => s.id === slide.id ? slide : s));
+  const updateHeroSlide = async (slide: HeroSlide) => {
+    const { error } = await supabase
+      .from('hero_slides')
+      .update({
+        tag: slide.tag,
+        title: slide.title,
+        description: slide.description,
+        button_text: slide.buttonText,
+        button_link: slide.buttonLink,
+        image: slide.image,
+        bg_color: slide.bgColor,
+        bg_dark: slide.bgDark
+      })
+      .eq('id', slide.id);
+
+    if (error) {
+      console.error('Error updating hero slide:', error);
+      throw error;
+    }
+    await loadData();
   };
 
-  const deleteHeroSlide = (id: number) => {
-    setHeroSlides(prev => prev.filter(s => s.id !== id));
+  const deleteHeroSlide = async (id: number) => {
+    const { error } = await supabase.from('hero_slides').delete().eq('id', id);
+
+    if (error) {
+      console.error('Error deleting hero slide:', error);
+      throw error;
+    }
+
+    await loadData();
   };
 
-  const updateOrderStatus = (orderId: number, status: Order['status']) => {
-    setOrders(prev => prev.map(order => 
-      order.id === orderId 
-        ? { ...order, status, updatedAt: new Date().toISOString() } 
-        : order
-    ));
+  const updateOrderStatus = async (orderId: number, status: Order['status']) => {
+    const { error } = await supabase
+      .from('orders')
+      .update({
+        status,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', orderId);
+
+    if (error) {
+      console.error('Error updating order status:', error);
+      throw error;
+    }
+
+    await loadData();
+  };
+
+  const createOrder = async (order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      // Calculate subtotal
+      const subtotal = order.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+      // 1. Create the order record
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: order.customerId,
+          customer_name: order.customerName,
+          customer_email: order.customerEmail,
+          total: order.total,
+          subtotal: subtotal,
+          status: order.status,
+          payment_method: order.paymentMethod,
+          shipping_address: order.shippingAddress,
+          shipping_cost: 0, // Defaulting to 0 if not tracked
+          discount: 0      // Defaulting to 0 if not tracked
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+      if (!orderData) throw new Error('Failed to create order');
+
+      // 2. Create order items items
+      const orderItems = order.items.map(item => ({
+        order_id: orderData.id,
+        product_id: item.productId,
+        quantity: item.quantity,
+        price: item.price,
+        size: item.size,
+        color: item.color,
+        name: item.name,
+        image: item.image
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
+
+      // 3. Force reload to update UI immediately
+      await loadData();
+
+    } catch (error) {
+      console.error('Error creating order:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      throw error;
+    }
   };
 
   return (
-    <ProductContext.Provider value={{ 
-      products, 
-      coupons, 
+    <ProductContext.Provider value={{
+      products,
+      coupons,
       heroSlides,
       customers,
       orders,
+      loading,
       addProduct,
       updateProduct,
-      deleteProduct, 
-      addCoupon, 
-      deleteCoupon, 
+      deleteProduct,
+      addCoupon,
+      deleteCoupon,
       getProductById,
       addHeroSlide,
       updateHeroSlide,
       deleteHeroSlide,
-      updateOrderStatus
+      updateOrderStatus,
+      createOrder
     }}>
       {children}
     </ProductContext.Provider>
