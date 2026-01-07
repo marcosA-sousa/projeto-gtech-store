@@ -15,6 +15,9 @@ import { CartProvider } from './contexts/CartContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProductProvider } from './contexts/ProductContext';
 
+import { AnimatePresence } from 'framer-motion';
+import PageTransition from './components/PageTransition';
+
 const ScrollToTop = () => {
   const { pathname } = useLocation();
 
@@ -33,6 +36,28 @@ const ScrollToTop = () => {
   return null;
 };
 
+const AnimatedRoutes = () => {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<PageTransition><Home /></PageTransition>} />
+          <Route path="produtos" element={<PageTransition><ProductListing /></PageTransition>} />
+          <Route path="produto/:id" element={<PageTransition><ProductDetail /></PageTransition>} />
+          <Route path="carrinho" element={<PageTransition><Cart /></PageTransition>} />
+          <Route path="meus-pedidos" element={<PageTransition><MyOrders /></PageTransition>} />
+          <Route path="categorias" element={<PageTransition><Categories /></PageTransition>} />
+          <Route path="admin" element={<PageTransition><AdminPanel /></PageTransition>} />
+        </Route>
+        <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
+        <Route path="/signup" element={<PageTransition><SignUp /></PageTransition>} />
+      </Routes>
+    </AnimatePresence>
+  );
+};
+
 const App: React.FC = () => {
   return (
     <AuthProvider>
@@ -40,19 +65,7 @@ const App: React.FC = () => {
         <CartProvider>
           <Router>
             <ScrollToTop />
-            <Routes>
-              <Route path="/" element={<Layout />}>
-                <Route index element={<Home />} />
-                <Route path="produtos" element={<ProductListing />} />
-                <Route path="produto/:id" element={<ProductDetail />} />
-                <Route path="carrinho" element={<Cart />} />
-                <Route path="meus-pedidos" element={<MyOrders />} />
-                <Route path="categorias" element={<Categories />} />
-                <Route path="admin" element={<AdminPanel />} />
-              </Route>
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<SignUp />} />
-            </Routes>
+            <AnimatedRoutes />
           </Router>
         </CartProvider>
       </ProductProvider>

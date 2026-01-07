@@ -286,7 +286,7 @@ const Sneaker3DView: React.FC<{ currentModel: typeof AVAILABLE_MODELS[0]; modelK
 };
 
 const Home: React.FC = () => {
-  const { products, heroSlides } = useProducts();
+  const { products, heroSlides, loading: contextLoading } = useProducts();
   const [currentModelIndex, setCurrentModelIndex] = useState(0);
   const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
   const [isLoading, setIsLoading] = useState(() => {
@@ -294,7 +294,7 @@ const Home: React.FC = () => {
   });
   const [isFading, setIsFading] = useState(false);
   const currentModel = AVAILABLE_MODELS[currentModelIndex];
-  const currentSlide = heroSlides[currentHeroSlide] || heroSlides[0];
+  const currentSlide = heroSlides.length > 0 ? (heroSlides[currentHeroSlide] || heroSlides[0]) : null;
 
   // Auto-play do carrossel hero com transição suave
   useEffect(() => {
@@ -309,11 +309,19 @@ const Home: React.FC = () => {
     return () => clearInterval(interval);
   }, [heroSlides.length]);
 
-  if (isLoading) {
+  if (isLoading || (contextLoading && heroSlides.length === 0)) {
     return <Preloader onLoadComplete={() => {
       setIsLoading(false);
       sessionStorage.setItem('hasSeenPreloader', 'true');
     }} />;
+  }
+
+  if (!currentSlide) {
+    return (
+      <div className="min-h-screen flex items-center justify-center dark:bg-gray-950">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+      </div>
+    );
   }
 
   const nextModel = () => {
