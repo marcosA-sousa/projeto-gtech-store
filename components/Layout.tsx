@@ -265,9 +265,9 @@ const Layout: React.FC = () => {
                 <img src="../public/assets/logo-footer.svg" alt="Digital Store" className="h-8" />
               </div>
               <p className="text-sm text-gray-400 leading-relaxed">
-                Na Digital Store você encontra a melhor qualidade e preços acessíveis para você.
-                Temos uma ampla variedade de produtos para atender às suas necessidades.
-                Seja cliente ou vendedor, encontre aqui o que precisa.
+                Na Digital Store você encontra a melhor qualidade e preços acessíveis para você. <br />
+                Temos uma ampla variedade de produtos para atender às suas necessidades. <br />
+                Seja cliente ou vendedor, encontre aqui o que precisa. <br />
                 Digital Store é a sua loja virtual.
               </p>
               {/* Social Icons */}
@@ -294,10 +294,10 @@ const Layout: React.FC = () => {
             <div>
               <h3 className="font-bold text-lg mb-6">Informação</h3>
               <ul className="space-y-3">
-                <li><Link to="/seguranca" className="text-sm text-gray-400 hover:text-white transition-colors">Ouvidoria</Link></li>
-                <li><Link to="/wishlist" className="text-sm text-gray-400 hover:text-white transition-colors">Unidades</Link></li>
-                <li><Link to="/blog" className="text-sm text-gray-400 hover:text-white transition-colors">Blog</Link></li>
-                <li><Link to="/trabalhe-conosco" className="text-sm text-gray-400 hover:text-white transition-colors">Trabalhe conosco</Link></li>
+                <li><Link to="https://digitalcollege.com.br/ouvidoria/" className="text-sm text-gray-400 hover:text-white transition-colors">Ouvidoria</Link></li>
+                <li><Link to="https://digitalcollege.com.br/contato/" className="text-sm text-gray-400 hover:text-white transition-colors">Unidades</Link></li>
+                <li><Link to="https://digitalcollege.com.br/blog/" className="text-sm text-gray-400 hover:text-white transition-colors">Blog</Link></li>
+                <li><Link to="https://digitalcollege.com.br/trabalhe-conosco/" className="text-sm text-gray-400 hover:text-white transition-colors">Trabalhe conosco</Link></li>
                 <li><Link to="/meus-pedidos" className="text-sm text-gray-400 hover:text-white transition-colors">Meus Pedidos</Link></li>
               </ul>
             </div>
@@ -306,11 +306,11 @@ const Layout: React.FC = () => {
             <div>
               <h3 className="font-bold text-lg mb-6">Categorias</h3>
               <ul className="space-y-3">
-                <li><Link to="/categorias/camisetas" className="text-sm text-gray-400 hover:text-white transition-colors">Camisetas</Link></li>
-                <li><Link to="/categorias/calcas" className="text-sm text-gray-400 hover:text-white transition-colors">Calças</Link></li>
-                <li><Link to="/categorias/bones" className="text-sm text-gray-400 hover:text-white transition-colors">Bonés</Link></li>
-                <li><Link to="/categorias/headphones" className="text-sm text-gray-400 hover:text-white transition-colors">Headphones</Link></li>
-                <li><Link to="/categorias/tenis" className="text-sm text-gray-400 hover:text-white transition-colors">Tênis</Link></li>
+                <li><Link to="/produtos?categoria=Camisetas" className="text-sm text-gray-400 hover:text-white transition-colors">Camisetas</Link></li>
+                <li><Link to="/produtos?categoria=Calças" className="text-sm text-gray-400 hover:text-white transition-colors">Calças</Link></li>
+                <li><Link to="/produtos?categoria=Bonés" className="text-sm text-gray-400 hover:text-white transition-colors">Bonés</Link></li>
+                <li><Link to="/produtos?categoria=Headphones" className="text-sm text-gray-400 hover:text-white transition-colors">Headphones</Link></li>
+                <li><Link to="/produtos?categoria=Tênis" className="text-sm text-gray-400 hover:text-white transition-colors">Tênis</Link></li>
               </ul>
             </div>
 
