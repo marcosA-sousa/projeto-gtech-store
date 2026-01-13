@@ -1,21 +1,24 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Star, CheckCircle, X, AlertCircle, ArrowRight } from 'lucide-react';
 import { useProducts } from '../contexts/ProductContext';
 import { useCart } from '../contexts/CartContext';
 import ProductCard from '../components/ProductCard';
+import CartModal from '../components/CartModal';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { getProductById, products } = useProducts();
   const { addItem } = useCart();
-  
+  const navigate = useNavigate();
+
   const product = getProductById(Number(id));
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState('Padrão');
   const [showToast, setShowToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [showCartModal, setShowCartModal] = useState(false);
 
   // Mapeamento de tamanhos por categoria para exibição
   const getSizesByProductCategory = (category: string) => {
@@ -83,7 +86,6 @@ const ProductDetail: React.FC = () => {
       setShowToast({ message: 'Por favor, selecione um tamanho disponível.', type: 'error' });
       return;
     }
-
     addItem({
       productId: product.id,
       name: product.name,
@@ -94,7 +96,7 @@ const ProductDetail: React.FC = () => {
       size: selectedSize,
       quantity: 1
     });
-    setShowToast({ message: 'Produto adicionado!', type: 'success' });
+    setShowCartModal(true);
   };
 
   return (
@@ -228,6 +230,12 @@ const ProductDetail: React.FC = () => {
           </div>
         </div>
 
+        {/* Modal de confirmação de adição ao carrinho */}
+        <CartModal
+          isOpen={showCartModal}
+          onClose={() => setShowCartModal(false)}
+          onGoToCart={() => navigate('/carrinho')}
+        />
         {/* Seção de Produtos Relacionados */}
         {relatedProducts.length > 0 && (
           <section className="mt-20 border-t border-gray-100 dark:border-gray-800 pt-16 mb-20 animate-in fade-in slide-in-from-bottom-8 duration-700">

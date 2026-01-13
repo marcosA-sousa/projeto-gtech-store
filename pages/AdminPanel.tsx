@@ -444,7 +444,7 @@ const AdminPanel: React.FC = () => {
         {/* Header de Gerenciamento */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
           <div>
-            <h1 className="text-4xl font-black text-gray-800 dark:text-white uppercase tracking-tighter">Admin Panel</h1>
+            <h1 className="text-4xl font-black text-gray-800 dark:text-white uppercase tracking-tighter">Painel de Admin</h1>
             <p className="text-gray-500 dark:text-gray-400 font-medium">Gestão centralizada de performance e inventário.</p>
           </div>
 
