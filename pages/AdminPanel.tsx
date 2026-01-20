@@ -1149,6 +1149,18 @@ const AdminPanel: React.FC = () => {
                     </div>
 
                     <div>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Descrição do Produto</label>
+                      <textarea
+                        value={newProduct.description}
+                        onChange={e => setNewProduct({ ...newProduct, description: e.target.value })}
+                        className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary dark:text-white font-medium resize-none"
+                        placeholder="Descreva as características principais do produto..."
+                        rows={4}
+                      />
+                      <p className="text-xs text-gray-400 mt-2">Esta descrição aparecerá na página do produto</p>
+                    </div>
+
+                    <div>
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 block">Grade em Estoque ({newProduct.category})</label>
                       <div className="flex flex-wrap gap-3">
                         {currentSizeOptions.map(size => (
