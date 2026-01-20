@@ -122,7 +122,7 @@ const MyOrders: React.FC = () => {
                 <div className="flex items-center gap-4">
                   {order.items.slice(0, 3).map((item, idx) => (
                     <div key={idx} className="w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-center p-2 border border-gray-100 dark:border-gray-700">
-                      <img src={item.image} alt={item.name} className="max-w-full max-h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover object-center mix-blend-multiply dark:mix-blend-normal" />
                     </div>
                   ))}
                   {order.items.length > 3 && (
