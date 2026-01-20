@@ -1,4 +1,3 @@
-
 /* Configuração da View Transition*/
 ::view-transition-old(root),
 ::view-transition-new(root) {
@@ -41,6 +40,7 @@
 html.transitioning * {
     transition: none !important;
 }
+
 html:not(.transitioning) {
     transition: background-color 0.2s ease, color 0.2s ease;
 }
@@ -70,4 +70,37 @@ html:not(.transitioning) [class*="border-"] {
 html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar customizada para a seção de comentários */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-track {
+    background: #1f2937;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #C92071;
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #A01A5A;
+}
+
+/* Firefox scrollbar */
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #C92071 #f1f1f1;
+}
+
+.dark .custom-scrollbar {
+    scrollbar-color: #C92071 #1f2937;
 }
