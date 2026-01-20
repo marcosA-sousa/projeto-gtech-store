@@ -568,8 +568,8 @@ const AdminPanel: React.FC = () => {
                   {dashboardMetrics.topSellers.map((product, i) => (
                     <div key={product.id} className="flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-2xl transition-all group">
                       <span className="text-lg font-black text-gray-200 dark:text-gray-700 w-6">0{i + 1}</span>
-                      <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl p-1 shrink-0">
-                        <img src={product.image} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
+                      <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl p-1 shrink-0 overflow-hidden">
+                        <img src={product.image} className="w-full h-full object-cover object-center mix-blend-multiply dark:mix-blend-normal" />
                       </div>
                       <div className="flex-grow">
                         <div className="font-bold text-gray-800 dark:text-white group-hover:text-primary transition-colors truncate max-w-[200px]">{product.name}</div>
@@ -625,8 +625,8 @@ const AdminPanel: React.FC = () => {
                 <div className="p-4">
                   {dashboardMetrics.lowSellers.map((product) => (
                     <div key={product.id} className="flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-2xl transition-all">
-                      <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 shrink-0">
-                        <img src={product.image} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
+                      <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 shrink-0 overflow-hidden">
+                        <img src={product.image} className="w-full h-full object-cover object-center mix-blend-multiply dark:mix-blend-normal" />
                       </div>
                       <div className="flex-grow">
                         <div className="font-bold text-gray-800 dark:text-white text-sm truncate">{product.name}</div>
@@ -856,7 +856,7 @@ const AdminPanel: React.FC = () => {
                         {order.items.map((item) => (
                           <div key={item.id} className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3">
                             <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-lg overflow-hidden shrink-0">
-                              <img src={item.image} className="w-full h-full object-contain" alt={item.name} />
+                              <img src={item.image} className="w-full h-full object-cover object-center" alt={item.name} />
                             </div>
                             <div className="flex-1">
                               <div className="text-sm font-bold text-gray-800 dark:text-white">{item.name}</div>
@@ -952,7 +952,7 @@ const AdminPanel: React.FC = () => {
                         <td className="px-8 py-6">
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl p-1 overflow-hidden shrink-0">
-                              <img src={product.image} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" alt={product.name} />
+                              <img src={product.image} className="w-full h-full object-cover object-center mix-blend-multiply dark:mix-blend-normal" alt={product.name} />
                             </div>
                             <div className="flex flex-col">
                               <span className="font-bold text-gray-700 dark:text-gray-200 text-sm truncate max-w-[150px] group-hover:text-primary transition-colors">{product.name}</span>
@@ -1194,7 +1194,7 @@ const AdminPanel: React.FC = () => {
                       <div className="grid grid-cols-4 gap-3">
                         {newProduct.images.map((img, i) => (
                           <div key={i} className="relative aspect-square bg-gray-50 dark:bg-gray-800 rounded-2xl overflow-hidden group border dark:border-gray-700">
-                            <img src={img} className="w-full h-full object-contain p-2 mix-blend-multiply dark:mix-blend-normal" />
+                            <img src={img} className="w-full h-full object-cover object-center mix-blend-multiply dark:mix-blend-normal" />
                             <button
                               type="button"
                               onClick={() => removeExtraImage(i)}
@@ -1209,7 +1209,7 @@ const AdminPanel: React.FC = () => {
 
                     <div className="p-8 bg-gray-50 dark:bg-gray-800 rounded-[32px] border-2 border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center min-h-[200px]">
                       <div className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-4">Preview em Tempo Real</div>
-                      {newProduct.image ? <img src={newProduct.image} className="max-w-full max-h-40 object-contain mix-blend-multiply dark:mix-blend-normal" /> : <ImageIcon className="w-16 h-16 text-gray-200" />}
+                      {newProduct.image ? <img src={newProduct.image} className="max-w-full max-h-40 object-cover object-center mix-blend-multiply dark:mix-blend-normal" /> : <ImageIcon className="w-16 h-16 text-gray-200" />}
                     </div>
                   </div>
                 </div>

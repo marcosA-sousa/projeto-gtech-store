@@ -158,8 +158,8 @@ const Layout: React.FC = () => {
                         onClick={() => selectSuggestion(product.id)}
                         className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left group"
                       >
-                        <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center p-1 flex-shrink-0">
-                          <img src={product.image} alt={product.name} className="max-w-full max-h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
+                        <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center p-1 flex-shrink-0 overflow-hidden">
+                          <img src={product.image} alt={product.name} className="w-full h-full object-cover object-center mix-blend-multiply dark:mix-blend-normal" />
                         </div>
                         <div className="flex-grow min-w-0">
                           <h4 className="text-sm font-bold text-gray-800 dark:text-white truncate group-hover:text-primary transition-colors">{product.name}</h4>
