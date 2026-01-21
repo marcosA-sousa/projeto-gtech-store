@@ -356,25 +356,25 @@ const Home: React.FC = () => {
   return (
     <div className="transition-colors">
       {/* Hero Carrossel */}
-      <section className={`${currentSlide.bgColor} ${currentSlide.bgDark} py-16 lg:py-24 relative overflow-hidden transition-colors duration-500`}>
+      <section className={`${currentSlide.bgColor} ${currentSlide.bgDark} py-20 lg:py-24 relative overflow-hidden transition-colors duration-500`}>
         {/* Decoração de fundo com pontinhos */}
-        <div className="absolute top-8 right-8 w-40 h-40 opacity-20">
+        <div className="absolute top-4 right-4 lg:top-8 lg:right-8 w-32 h-32 lg:w-40 lg:h-40 opacity-20">
           <div className="grid grid-cols-6 gap-2">
             {Array.from({ length: 36 }).map((_, i) => (
-              <div key={i} className="w-2 h-2 rounded-full bg-primary" />
+              <div key={i} className="w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full bg-primary" />
             ))}
           </div>
         </div>
 
-        <div className="container mx-auto px-4 lg:px-12 flex flex-col-reverse lg:flex-row items-center justify-between relative">
-          <div className={`lg:w-1/2 z-10 mt-10 lg:mt-0 text-center lg:text-left transition-all duration-300 ${isFading ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
+        <div className="container mx-auto px-4 lg:px-12 flex flex-col-reverse lg:flex-row items-center justify-between relative gap-12 lg:gap-0">
+          <div className={`lg:w-1/2 z-10 text-center lg:text-left transition-all duration-300 ${isFading ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
             <span className="text-primary font-bold text-sm tracking-widest mb-3 block uppercase">
               {currentSlide.tag}
             </span>
-            <h1 className="text-4xl lg:text-6xl font-extrabold text-[#1F1F1F] dark:text-white leading-tight mb-6">
+            <h1 className="text-3xl lg:text-6xl font-extrabold text-[#1F1F1F] dark:text-white leading-tight mb-6">
               {currentSlide.title}
             </h1>
-            <p className="text-gray-500 dark:text-gray-400 text-lg mb-8 max-w-md mx-auto lg:mx-0 leading-relaxed">
+            <p className="text-gray-500 dark:text-gray-400 text-base lg:text-lg mb-8 max-w-md mx-auto lg:mx-0 leading-relaxed">
               {currentSlide.description}
             </p>
             <Link
@@ -384,11 +384,11 @@ const Home: React.FC = () => {
               {currentSlide.buttonText}
             </Link>
           </div>
-          <div className={`lg:w-1/2 relative flex justify-center lg:justify-center transition-all duration-300 ${isFading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+          <div className={`lg:w-1/2 relative flex justify-center lg:justify-center transition-all duration-300 ${isFading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'} px-6 lg:px-0`}>
             <img
               key={currentSlide.id}
               alt={currentSlide.title}
-              className="w-full max-w-[500px] object-contain animate-float drop-shadow-2xl mix-blend-multiply dark:mix-blend-normal rounded-3xl"
+              className="w-full max-w-[340px] lg:max-w-[500px] object-contain animate-float drop-shadow-2xl mix-blend-multiply dark:mix-blend-normal rounded-3xl"
               src={currentSlide.image}
             />
           </div>
