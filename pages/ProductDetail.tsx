@@ -789,9 +789,11 @@ const ProductDetail: React.FC = () => {
                     <button
                       onClick={handleSubmitComment}
                       disabled={!isLoggedIn}
+                      title="Enviar comentário"
+                      aria-label="Enviar comentário sobre o produto"
                       className="absolute right-2 sm:right-3 bottom-2 sm:bottom-3 bg-primary hover:bg-primary-hover text-white p-2 sm:p-2.5 rounded-xl transition-all active:scale-95 shadow-lg shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4" aria-hidden="true" />
                     </button>
                   </div>
 
@@ -808,9 +810,11 @@ const ProductDetail: React.FC = () => {
                     <button
                       onClick={() => fileInputRef.current?.click()}
                       disabled={!isLoggedIn}
+                      title="Adicionar foto ao comentário"
+                      aria-label="Fazer upload de imagem para anexar ao comentário"
                       className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-xs sm:text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4" aria-hidden="true" />
                       <span>Adicionar foto</span>
                     </button>
 
@@ -823,9 +827,11 @@ const ProductDetail: React.FC = () => {
                         />
                         <button
                           onClick={handleRemoveImage}
+                          title="Remover imagem"
+                          aria-label="Remover imagem do comentário"
                           className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full shadow-lg transition-colors"
                         >
-                          <X className="w-3 h-3" />
+                          <X className="w-3 h-3" aria-hidden="true" />
                         </button>
                       </div>
                     )}
@@ -858,9 +864,11 @@ const ProductDetail: React.FC = () => {
                         <div className="relative flex-shrink-0">
                           <button
                             onClick={() => setOpenMenuId(openMenuId === comment.id ? null : comment.id)}
+                            title="Opções do comentário"
+                            aria-label="Menu de opções para o comentário"
                             className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0"
                           >
-                            <MoreVertical className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" />
+                            <MoreVertical className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" aria-hidden="true" />
                           </button>
 
                           {openMenuId === comment.id && (
@@ -933,10 +941,13 @@ const ProductDetail: React.FC = () => {
                               <button
                                 key={star}
                                 onClick={() => setEditRating(star)}
+                                title={`Classificar com ${star} ${star === 1 ? 'estrela' : 'estrelas'}`}
+                                aria-label={`Classificar com ${star} ${star === 1 ? 'estrela' : 'estrelas'}`}
                                 className="transition-colors"
                               >
                                 <Star
                                   className={`w-4 h-4 ${star <= editRating ? 'fill-yellow-500 text-yellow-500' : 'text-gray-300'}`}
+                                  aria-hidden="true"
                                 />
                               </button>
                             ))}
@@ -1021,6 +1032,8 @@ const ProductDetail: React.FC = () => {
                               </button>
                               <button
                                 onClick={() => handleSubmitReply(comment.id)}
+                                title="Enviar resposta"
+                                aria-label="Enviar resposta ao comentário"
                                 className="px-3 py-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-lg transition-all"
                               >
                                 Responder
@@ -1054,9 +1067,11 @@ const ProductDetail: React.FC = () => {
                                         <div className="relative flex-shrink-0">
                                           <button
                                             onClick={() => setOpenReplyMenuId(openReplyMenuId === reply.id ? null : reply.id)}
+                                            title="Opções da resposta"
+                                            aria-label="Menu de opções para a resposta"
                                             className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                           >
-                                            <MoreVertical className="w-3 h-3 text-gray-400" />
+                                            <MoreVertical className="w-3 h-3 text-gray-400" aria-hidden="true" />
                                           </button>
 
                                           {openReplyMenuId === reply.id && (
@@ -1116,9 +1131,14 @@ const ProductDetail: React.FC = () => {
                                                 <button
                                                   key={star}
                                                   onClick={() => setEditReplyRating(star)}
+                                                  title={`Classificar com ${star} ${star === 1 ? 'estrela' : 'estrelas'}`}
+                                                  aria-label={`Classificar resposta com ${star} ${star === 1 ? 'estrela' : 'estrelas'}`}
                                                   className="transition-colors"
                                                 >
-                                                  <Star className={`w-3 h-3 ${star <= editReplyRating ? 'fill-yellow-500 text-yellow-500' : 'text-gray-300'}`} />
+                                                  <Star 
+                                                    className={`w-3 h-3 ${star <= editReplyRating ? 'fill-yellow-500 text-yellow-500' : 'text-gray-300'}`}
+                                                    aria-hidden="true"
+                                                  />
                                                 </button>
                                               ))}
                                             </div>
@@ -1169,6 +1189,8 @@ const ProductDetail: React.FC = () => {
                         {/* Botão de Like */}
                         <button
                           onClick={() => handleLikeComment(comment.id)}
+                          title={comment.likedBy.includes(user?.id || '') ? "Remover curtida" : "Curtir comentário"}
+                          aria-label={comment.likedBy.includes(user?.id || '') ? `Você e mais ${comment.likes - 1} pessoas curtiram este comentário` : `Curtir este comentário. ${comment.likes} pessoas já curtiram`}
                           className={`flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all ${isLoggedIn && comment.likedBy.includes(user?.id || '')
                             ? 'bg-primary/10 text-primary'
                             : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -1177,6 +1199,7 @@ const ProductDetail: React.FC = () => {
                           <ThumbsUp
                             className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isLoggedIn && comment.likedBy.includes(user?.id || '') ? 'fill-current' : ''
                               }`}
+                            aria-hidden="true"
                           />
                           <span className="text-xs sm:text-sm font-bold">{comment.likes}</span>
                         </button>

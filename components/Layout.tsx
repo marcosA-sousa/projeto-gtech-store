@@ -55,6 +55,8 @@ const DarkModeToggle = () => {
   return (
     <button
       onClick={toggleTheme}
+      title={isDark ? "Mudar para modo claro" : "Mudar para modo escuro"}
+      aria-label={isDark ? "Ativar tema claro" : "Ativar tema escuro"}
       className="fixed top-4 right-4 z-[100] w-9 h-9 rounded-full bg-white dark:bg-gray-800 shadow-xl flex items-center justify-center border border-gray-100 dark:border-gray-700 hover:scale-110 active:scale-95 transition-all text-gray-600 dark:text-yellow-400"
     >
       {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -230,8 +232,13 @@ const Layout: React.FC = () => {
               </div>
             )}
 
-            <Link to="/carrinho" className="relative text-primary hover:text-primary-hover transition-colors ml-2">
-              <ShoppingCart className="w-6 h-6" />
+            <Link 
+              to="/carrinho" 
+              title="Ir para o carrinho de compras"
+              aria-label="Carrinho de compras com 0 itens"
+              className="relative text-primary hover:text-primary-hover transition-colors ml-2"
+            >
+              <ShoppingCart className="w-6 h-6" aria-hidden="true" />
               {totalItems > 0 && (
                 <span className="absolute -top-1 -right-2 bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                   {totalItems}
