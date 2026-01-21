@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, NavLink, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, User, Sun, Moon, LogOut, Package, ChevronDown, ArrowRight, Settings } from 'lucide-react';
+import { Search, ShoppingCart, User, Sun, Moon, LogOut, Package, ChevronDown, ArrowRight, Settings, Menu, X } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useProducts } from '../contexts/ProductContext';
@@ -71,7 +71,13 @@ const Layout: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState<Product[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+
+  // Fecha o menu mobile quando a rota muda
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [navigate]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -127,9 +133,23 @@ const Layout: React.FC = () => {
 
       <header className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 transition-colors">
         <div className="container mx-auto px-4 lg:px-12 py-6 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-8">
-          <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-            <img src="../public/assets/logo-header.svg" alt="logo da página" />
-          </Link>
+          <div className="w-full md:w-auto flex items-center justify-between md:justify-start gap-4 flex-shrink-0">
+            {/* Menu Hambúrguer - Mobile Only - Extrema Esquerda */}
+            <button
+              onClick={() => setIsMenuOpen(true)}
+              className="md:hidden p-2 text-primary bg-white dark:bg-gray-900 border-2 border-primary/20 hover:border-primary rounded-xl shadow-lg shadow-primary/5 transition-all active:scale-95"
+              aria-label="Abrir menu"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+
+            <Link to="/" className="flex items-center gap-2 md:mx-0 mx-auto">
+              <img src="../public/assets/logo-header.svg" alt="logo da página" className="h-7 md:h-auto" />
+            </Link>
+
+            {/* Espaçador invisível para manter o logo centralizado no mobile */}
+            <div className="w-10 md:hidden" />
+          </div>
 
           <div className="flex-grow max-w-xl w-full relative" ref={searchRef}>
             <form onSubmit={handleSearch} className="relative z-50">
@@ -174,7 +194,7 @@ const Layout: React.FC = () => {
             )}
           </div>
 
-          <div className="flex items-center gap-6 flex-shrink-0 relative">
+          <div className="hidden md:flex items-center gap-6 flex-shrink-0 relative">
             {!isLoggedIn ? (
               <>
                 <Link to="/signup" className="text-gray-500 dark:text-gray-400 hover:underline text-sm font-medium">Cadastre-se</Link>
@@ -241,7 +261,7 @@ const Layout: React.FC = () => {
           </div>
         </div>
 
-        <nav className="container mx-auto px-4 lg:px-12 pb-0 pt-2 border-t border-gray-50 dark:border-gray-800/20">
+        <nav className="hidden md:block container mx-auto px-4 lg:px-12 pb-0 pt-2 border-t border-gray-50 dark:border-gray-800/20">
           <ul className="flex items-center gap-10 overflow-x-auto hide-scrollbar py-2">
             <li><NavLink to="/" className={navLinkClasses}>Home</NavLink></li>
             <li><NavLink to="/produtos" className={navLinkClasses}>Produtos</NavLink></li>
@@ -249,6 +269,92 @@ const Layout: React.FC = () => {
             <li><NavLink to="/meus-pedidos" className={navLinkClasses}>Meus Pedidos</NavLink></li>
           </ul>
         </nav>
+
+        {/* Menu Mobile Overlay & Sidebar */}
+        {isMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] md:hidden animate-in fade-in duration-300"
+              onClick={() => setIsMenuOpen(false)}
+            />
+
+            {/* Sidebar */}
+            <div className="fixed top-0 left-0 h-full w-[280px] bg-white dark:bg-gray-900 z-[101] md:hidden p-6 shadow-2xl animate-in slide-in-from-left duration-300">
+              <div className="flex items-center justify-between mb-8">
+                <img src="../public/assets/logo-header.svg" alt="Digital Store" className="h-6" />
+                <button
+                  onClick={() => setIsMenuOpen(false)}
+                  className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="mb-8">
+                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Minha Loja</h3>
+                <div className="flex items-center gap-6">
+                  {/* Cart Mobile */}
+                  <Link to="/carrinho" onClick={() => setIsMenuOpen(false)} className="relative text-primary p-2 bg-primary/5 rounded-xl border border-primary/10">
+                    <ShoppingCart className="w-6 h-6" />
+                    {totalItems > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ring-2 ring-white dark:ring-gray-900">
+                        {totalItems}
+                      </span>
+                    )}
+                  </Link>
+
+                  {/* Profile Mobile */}
+                  {isLoggedIn ? (
+                    <div className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
+                      <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center text-primary">
+                        <User className="w-4 h-4" />
+                      </div>
+                      <span className="text-sm font-bold text-gray-700 dark:text-gray-200">{user?.name.split(' ')[0]}</span>
+                    </div>
+                  ) : (
+                    <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
+                      <User className="w-6 h-6 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="mb-8">
+                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Navegação</h3>
+                <nav className="flex flex-col gap-4">
+                  <NavLink to="/" className={({ isActive }) => `text-base font-bold transition-colors ${isActive ? 'text-primary' : 'text-gray-700 dark:text-gray-200'}`}>Home</NavLink>
+                  <NavLink to="/produtos" className={({ isActive }) => `text-base font-bold transition-colors ${isActive ? 'text-primary' : 'text-gray-700 dark:text-gray-200'}`}>Produtos</NavLink>
+                  <NavLink to="/categorias" className={({ isActive }) => `text-base font-bold transition-colors ${isActive ? 'text-primary' : 'text-gray-700 dark:text-gray-200'}`}>Categorias</NavLink>
+                  <NavLink to="/meus-pedidos" className={({ isActive }) => `text-base font-bold transition-colors ${isActive ? 'text-primary' : 'text-gray-700 dark:text-gray-200'}`}>Meus Pedidos</NavLink>
+                </nav>
+              </div>
+
+              {isLoggedIn && (
+                <div className="mb-8 pt-6 border-t border-gray-100 dark:border-gray-800">
+                  <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Opções da Conta</h3>
+                  <div className="flex flex-col gap-4">
+                    {user?.role === 'admin' && (
+                      <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 text-sm font-bold text-primary">
+                        <Settings className="w-4 h-4" /> Painel Admin
+                      </Link>
+                    )}
+                    <button onClick={() => { logout(); setIsMenuOpen(false); }} className="flex items-center gap-3 text-sm font-bold text-red-500">
+                      <LogOut className="w-4 h-4" /> Sair da Conta
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {!isLoggedIn && (
+                <div className="pt-6 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-3">
+                  <Link to="/login" className="w-full bg-primary text-white text-center py-3 rounded-lg font-bold shadow-lg shadow-primary/30">Entrar</Link>
+                  <Link to="/signup" className="w-full bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-center py-3 rounded-lg font-bold">Cadastre-se</Link>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </header>
 
       <main className="flex-grow">
