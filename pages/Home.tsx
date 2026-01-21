@@ -15,8 +15,8 @@ const AVAILABLE_MODELS = [
   {
     id: 'nike-pegasus-36',
     name: 'Nike Air Zoom Pegasus 36',
-    url: '/nike1/scene.gltf',
-    scale: 1.7,
+    url: '/nike_air_zoom_pegasus_36/scene.gltf',
+    scale: 1.5,
     position: [0, -15, 0],
     description: 'O tênis perfeito para corridas longas. Com tecnologia Zoom Air na parte dianteira e traseira, oferece amortecimento responsivo e durável. Seu design aerodinâmico combina performance e estilo.',
     price: 'R$ 899,90',
@@ -27,31 +27,11 @@ const AVAILABLE_MODELS = [
     name: 'JBL tour one m2',
     url: '/jbl_tour/scene.gltf',
     scale: 8.5,
-    position: [10, 10, 0],
+    position: [0, 0, 0],
     description: 'A tecnologia de Cancelamento de Ruído Adaptativo do JBL Tour One M2 elimina distrações para que você possa curtir suas músicas favoritas, ou até mesmo o silêncio, tudo com o lendário JBL Pro Sound de alta resolução. Mergulhe em um áudio espacial incrível em qualquer lugar por até 50 horas ou aproveite a clareza da tecnologia de 4 microfones enquanto fala ao telefone.',
     price: 'R$ 1899,90',
     tag: 'Novo'
   },
-  {
-    id: 'nike-pegasus-trail',
-    name: 'Nike Pegasus Trail 3',
-    url: '/nike_air_zoom_pegasus_36%20%281%29/scene.gltf',
-    scale: 1.5,
-    position: [0, -15, 0],
-    description: 'Projetado para trilhas. Com tração agressiva e proteção reforçada, domina qualquer terreno. A combinação perfeita entre estabilidade e velocidade off-road.',
-    price: 'R$ 1.590,90',
-    tag: 'Trail'
-  },
-  {
-    id: 'nike-pegasus-turbo',
-    name: 'Nike Air Zoom Pegasus Turbo',
-    url: '/nike_air_zoom_pegasus_36%20%281%29/scene.gltf',
-    scale: 1.5,
-    position: [0, -15, 0],
-    description: 'Velocidade máxima. Com espuma ZoomX ultraeve e design de corrida profissional, foi criado para quebrar seus recordes pessoais. Leveza e retorno de energia incomparáveis.',
-    price: 'R$ 1.199,90',
-    tag: 'Premium'
-  }
 ];
 
 class ModelErrorBoundary extends React.Component<
@@ -177,7 +157,7 @@ const SneakerModel: React.FC<{
   useFrame((state, delta) => {
     if (groupRef.current && isReady) {
       // Rotação lenta e contínua
-      groupRef.current.rotation.y += delta * 0.3;
+      groupRef.current.rotation.y += delta * 0.1;
     }
   });
 
@@ -293,6 +273,7 @@ const Home: React.FC = () => {
     return !sessionStorage.getItem('hasSeenPreloader');
   });
   const [isFading, setIsFading] = useState(false);
+  const [isModelTransitioning, setIsModelTransitioning] = useState(false);
   const currentModel = AVAILABLE_MODELS[currentModelIndex];
   const currentSlide = heroSlides.length > 0 ? (heroSlides[currentHeroSlide] || heroSlides[0]) : null;
 
@@ -308,6 +289,20 @@ const Home: React.FC = () => {
     }, 5000);
     return () => clearInterval(interval);
   }, [heroSlides.length]);
+
+  // Auto-play dos modelos 3D com transição fade
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsModelTransitioning(true);
+      setTimeout(() => {
+        setCurrentModelIndex((prev) => (prev + 1) % AVAILABLE_MODELS.length);
+        setTimeout(() => {
+          setIsModelTransitioning(false);
+        }, 50);
+      }, 500);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (isLoading || (contextLoading && heroSlides.length === 0)) {
     return <Preloader onLoadComplete={() => {
@@ -325,15 +320,28 @@ const Home: React.FC = () => {
   }
 
   const nextModel = () => {
-    setCurrentModelIndex((prev) => (prev + 1) % AVAILABLE_MODELS.length);
+    setIsModelTransitioning(true);
+    setTimeout(() => {
+      setCurrentModelIndex((prev) => (prev + 1) % AVAILABLE_MODELS.length);
+      setTimeout(() => setIsModelTransitioning(false), 50);
+    }, 500);
   };
 
   const prevModel = () => {
-    setCurrentModelIndex((prev) => (prev - 1 + AVAILABLE_MODELS.length) % AVAILABLE_MODELS.length);
+    setIsModelTransitioning(true);
+    setTimeout(() => {
+      setCurrentModelIndex((prev) => (prev - 1 + AVAILABLE_MODELS.length) % AVAILABLE_MODELS.length);
+      setTimeout(() => setIsModelTransitioning(false), 50);
+    }, 500);
   };
 
   const goToModel = (index: number) => {
-    setCurrentModelIndex(index);
+    if (index === currentModelIndex) return;
+    setIsModelTransitioning(true);
+    setTimeout(() => {
+      setCurrentModelIndex(index);
+      setTimeout(() => setIsModelTransitioning(false), 50);
+    }, 500);
   };
 
   const goToHeroSlide = (index: number) => {
@@ -405,7 +413,9 @@ const Home: React.FC = () => {
       <section className="py-24 bg-white dark:bg-gray-900/30 overflow-hidden">
         <div className="container mx-auto px-4 lg:px-12 flex flex-col md:flex-row items-center gap-16">
           <div className="md:w-1/2 relative flex justify-center min-h-[400px]">
-            <Sneaker3DView currentModel={currentModel} modelKey={currentModel.id} />
+            <div className={`w-full h-full transition-opacity duration-500 ${isModelTransitioning ? 'opacity-0' : 'opacity-100'}`}>
+              <Sneaker3DView currentModel={currentModel} modelKey={currentModel.id} />
+            </div>
 
             {/* Botões de navegação */}
             <button
@@ -439,7 +449,7 @@ const Home: React.FC = () => {
               ))}
             </div>
           </div>
-          <div className="md:w-1/2 text-center md:text-left">
+          <div className={`md:w-1/2 text-center md:text-left transition-opacity duration-500 ${isModelTransitioning ? 'opacity-0' : 'opacity-100'}`}>
             <div className="inline-block bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full mb-3 uppercase tracking-widest">
               {currentModel.tag}
             </div>
