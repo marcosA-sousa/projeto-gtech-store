@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Star, CheckCircle, X, AlertCircle, ArrowRight, Send, MoreVertical, Edit2, Trash2, Flag, UserX, ThumbsUp, Upload, MessageCircle } from 'lucide-react';
+import { Star, CheckCircle, X, AlertCircle, ArrowRight, Send, MoreVertical, Edit2, Trash2, Flag, UserX, ThumbsUp, Upload, MessageCircle, Heart } from 'lucide-react';
 import { useProducts } from '../contexts/ProductContext';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useFavorites } from '../contexts/FavoritesContext';
 import ProductCard from '../components/ProductCard';
 import CartModal from '../components/CartModal';
 
@@ -162,6 +163,7 @@ const ProductDetail: React.FC = () => {
   const { getProductById, products } = useProducts();
   const { addItem } = useCart();
   const { isLoggedIn, user } = useAuth();
+  const { addFavorite, removeFavorite, isFavorite } = useFavorites();
   const navigate = useNavigate();
 
   const product = getProductById(Number(id));
@@ -292,6 +294,16 @@ const ProductDetail: React.FC = () => {
       quantity: 1
     });
     setShowCartModal(true);
+  };
+
+  const handleToggleFavorite = () => {
+    if (isFavorite(product.id)) {
+      removeFavorite(product.id);
+      setShowToast({ message: 'Removido dos favoritos', type: 'success' });
+    } else {
+      addFavorite(product);
+      setShowToast({ message: 'Adicionado aos favoritos', type: 'success' });
+    }
   };
 
   const handleSubmitComment = () => {
@@ -702,15 +714,32 @@ const ProductDetail: React.FC = () => {
               </div>
             )}
 
-            <div className="pt-6">
+            <div className="pt-6 flex gap-4">
               <button
                 onClick={handleBuy}
                 disabled={!selectedSize}
-                className={`w-full font-black py-6 rounded-3xl uppercase tracking-[0.3em] text-xs transition-all flex items-center justify-center gap-4
+                className={`flex-1 font-black py-6 rounded-3xl uppercase tracking-[0.3em] text-xs transition-all flex items-center justify-center gap-4
                   ${selectedSize ? 'bg-primary hover:bg-primary-hover text-white shadow-2xl shadow-primary/30 active:scale-[0.96]' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}
                 `}
               >
                 {selectedSize ? 'Comprar Agora' : 'Selecione um tamanho'}
+              </button>
+              
+              <button
+                onClick={handleToggleFavorite}
+                title={isFavorite(product.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                aria-label={isFavorite(product.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                className={`px-6 py-6 rounded-3xl font-black transition-all flex items-center justify-center gap-2
+                  ${isFavorite(product.id) 
+                    ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30 active:scale-[0.96]' 
+                    : 'bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 active:scale-[0.96]'}
+                `}
+              >
+                <Heart 
+                  size={24} 
+                  className={isFavorite(product.id) ? 'fill-current' : ''}
+                  aria-hidden="true"
+                />
               </button>
             </div>
           </div>

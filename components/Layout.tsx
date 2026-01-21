@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, NavLink, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, User, Sun, Moon, LogOut, Package, ChevronDown, ArrowRight, Settings } from 'lucide-react';
+import { Search, ShoppingCart, User, Sun, Moon, LogOut, Package, ChevronDown, ArrowRight, Settings, Heart } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useProducts } from '../contexts/ProductContext';
@@ -219,6 +219,16 @@ const Layout: React.FC = () => {
                     >
                       <Package className="w-4 h-4 text-primary" />
                       Meus Pedidos
+                    </Link>
+                    <Link
+                      to="/favoritos"
+                      onClick={() => setShowProfileMenu(false)}
+                      title="Ver favoritos"
+                      aria-label="Ir para página de favoritos"
+                      className="flex items-center gap-3 px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <Heart className="w-4 h-4 text-red-500" aria-hidden="true" />
+                      Favoritos
                     </Link>
                     <button
                       onClick={() => { logout(); setShowProfileMenu(false); }}
