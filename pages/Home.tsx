@@ -286,7 +286,7 @@ const Home: React.FC = () => {
         setCurrentHeroSlide((prev) => (prev + 1) % heroSlides.length);
         setIsFading(false);
       }, 300);
-    }, 5000);
+    }, 20000);
     return () => clearInterval(interval);
   }, [heroSlides.length]);
 
@@ -410,6 +410,113 @@ const Home: React.FC = () => {
         </div>
       </section>
 
+      {/* Coleções em Destaque */}
+      <section className="py-12 bg-[#F5F5F5] dark:bg-gray-900">
+        <div className="container mx-auto px-4 lg:px-12 max-w-6xl">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-8">Coleções em destaque</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Card 1 - Supreme */}
+            <div
+              className="relative overflow-hidden rounded-lg aspect-[16/10] w-full bg-[#D8E3F2] dark:bg-gray-800 bg-cover bg-center bg-no-repeat"
+              style={{ backgroundImage: "url('/assets/colecao-destaques/collection-1.png')" }}
+            >
+              <div className="relative z-10 p-3 flex flex-col justify-between h-full">
+                <div>
+                  <span className="inline-block bg-[#E0FF51] text-gray-900 text-xs font-extrabold px-3 py-1.5 rounded-md mb-4 uppercase tracking-wide">30% OFF</span>
+                </div>
+                <Link
+                  to="/produtos?categoria=Camisetas"
+                  className="bg-white/90 hover:bg-white text-[#EE4266] px-8 py-2.5 rounded-lg font-bold text-sm transition-all w-fit shadow-sm text-center"
+                >
+                  Comprar
+                </Link>
+              </div>
+            </div>
+
+            {/* Card 2 - Adidas */}
+            <div
+              className="relative overflow-hidden rounded-lg aspect-[16/10] w-full bg-[#E2E3FF] dark:bg-gray-800 bg-cover bg-center bg-no-repeat"
+              style={{ backgroundImage: "url('/assets/colecao-destaques/collection-2.png')" }}
+            >
+              <div className="relative z-10 p-3 flex flex-col justify-between h-full">
+                <div>
+                  <span className="inline-block bg-[#E0FF51] text-gray-900 text-xs font-extrabold px-3 py-1.5 rounded-md mb-4 uppercase tracking-wide">30% OFF</span>
+                </div>
+                <Link
+                  to="/produtos?categoria=Tênis"
+                  className="bg-white/90 hover:bg-white text-[#EE4266] px-8 py-2.5 rounded-lg font-bold text-sm transition-all w-fit shadow-sm text-center"
+                >
+                  Comprar
+                </Link>
+              </div>
+            </div>
+
+            {/* Card 3 - Beats */}
+            <div
+              className="relative overflow-hidden rounded-lg aspect-[16/10] w-full bg-[#F9F1E7] dark:bg-gray-800 bg-cover bg-center bg-no-repeat"
+              style={{ backgroundImage: "url('/assets/colecao-destaques/collection-3.png')" }}
+            >
+              <div className="relative z-10 p-3 flex flex-col justify-between h-full">
+                <div>
+                  <span className="inline-block bg-[#E0FF51] text-gray-900 text-xs font-extrabold px-3 py-1.5 rounded-md mb-4 uppercase tracking-wide">30% OFF</span>
+                </div>
+                <Link
+                  to="/produtos?categoria=Headphones"
+                  className="bg-white/90 hover:bg-white text-[#EE4266] px-8 py-2.5 rounded-lg font-bold text-sm transition-all w-fit shadow-sm text-center"
+                >
+                  Comprar
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <section className="py-12 bg-[#F9F8FE] dark:bg-gray-950">
+        <div className="container mx-auto px-4 lg:px-12 text-center">
+          <h3 className="text-xl font-bold text-[#474747] dark:text-gray-200 mb-12">Categorias em destaque</h3>
+          <div className="flex flex-wrap justify-center gap-8 md:gap-14">
+            {CATEGORIES.map((cat, idx) => {
+              // Mapeamento do nome para o arquivo de imagem na pasta public/icons
+              const iconMap: Record<string, string> = {
+                'Camisetas': '/icons/camisa.png',
+                'Calças': '/icons/calca.png',
+                'Bonés': '/icons/boné.png',
+                'Headphones': '/icons/fone.png',
+                'Tênis': '/icons/tenis.png',
+              };
+              const iconSrc = iconMap[cat.name] || '/icons/camisa.png';
+
+              return (
+                <Link key={idx} to={`/produtos?categoria=${cat.name}`} className="group flex flex-col items-center gap-4 transition-all">
+                  <div className="w-24 h-24 rounded-full bg-white dark:bg-gray-800 shadow-[0_4px_25px_rgba(0,0,0,0.05)] dark:shadow-2xl flex items-center justify-center transition-all group-hover:shadow-xl group-hover:-translate-y-2 dark:border dark:border-gray-700">
+                    <img src={iconSrc} alt={cat.name} className="w-12 h-12 object-contain opacity-80 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                  <span className="text-sm font-bold text-[#474747] dark:text-gray-300 group-hover:text-primary transition-colors">{cat.name}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 bg-[#F9F8FE] dark:bg-gray-950">
+        <div className="container mx-auto px-4 lg:px-12">
+          <div className="flex justify-between items-center mb-8">
+            <h3 className="text-xl font-bold text-gray-700 dark:text-gray-200">Produtos em alta</h3>
+            <Link to="/produtos" className="text-primary font-medium flex items-center gap-1 hover:underline">
+              Ver todos <LucideIcons.ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {products.slice(0, 8).map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="py-24 bg-white dark:bg-gray-900/30 overflow-hidden">
         <div className="container mx-auto px-4 lg:px-12 flex flex-col md:flex-row items-center gap-16">
           <div className="md:w-1/2 relative flex justify-center min-h-[400px]">
@@ -481,50 +588,6 @@ const Home: React.FC = () => {
               <span>{AVAILABLE_MODELS.length}</span>
               <span className="ml-2">modelos disponíveis</span>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-12 bg-[#F9F8FE] dark:bg-gray-950">
-        <div className="container mx-auto px-4 lg:px-12 text-center">
-          <h3 className="text-xl font-bold text-[#474747] dark:text-gray-200 mb-12">Categorias em destaque</h3>
-          <div className="flex flex-wrap justify-center gap-8 md:gap-14">
-            {CATEGORIES.map((cat, idx) => {
-              // Mapeamento do nome para o arquivo de imagem na pasta public/icons
-              const iconMap: Record<string, string> = {
-                'Camisetas': '/icons/camisa.png',
-                'Calças': '/icons/calca.png',
-                'Bonés': '/icons/boné.png',
-                'Headphones': '/icons/fone.png',
-                'Tênis': '/icons/tenis.png',
-              };
-              const iconSrc = iconMap[cat.name] || '/icons/camisa.png';
-
-              return (
-                <Link key={idx} to={`/produtos?categoria=${cat.name}`} className="group flex flex-col items-center gap-4 transition-all">
-                  <div className="w-24 h-24 rounded-full bg-white dark:bg-gray-800 shadow-[0_4px_25px_rgba(0,0,0,0.05)] dark:shadow-2xl flex items-center justify-center transition-all group-hover:shadow-xl group-hover:-translate-y-2 dark:border dark:border-gray-700">
-                    <img src={iconSrc} alt={cat.name} className="w-12 h-12 object-contain opacity-80 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                  <span className="text-sm font-bold text-[#474747] dark:text-gray-300 group-hover:text-primary transition-colors">{cat.name}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 bg-[#F9F8FE] dark:bg-gray-950">
-        <div className="container mx-auto px-4 lg:px-12">
-          <div className="flex justify-between items-center mb-8">
-            <h3 className="text-xl font-bold text-gray-700 dark:text-gray-200">Produtos em alta</h3>
-            <Link to="/produtos" className="text-primary font-medium flex items-center gap-1 hover:underline">
-              Ver todos <LucideIcons.ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {products.slice(0, 8).map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
           </div>
         </div>
       </section>
