@@ -64,7 +64,8 @@ const DarkModeToggle = () => {
 
 const Layout: React.FC = () => {
   const navigate = useNavigate();
-  const { totalItems } = useCart();
+  const { totalItems, items, clearCart, subtotal } = useCart();
+    const [showCartModal, setShowCartModal] = useState(false);
   const { isLoggedIn, user, logout } = useAuth();
   const { products } = useProducts();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -250,14 +251,81 @@ const Layout: React.FC = () => {
               </div>
             )}
 
-            <Link to="/carrinho" className="relative text-primary hover:text-primary-hover transition-colors ml-2">
-              <ShoppingCart className="w-6 h-6" />
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-2 bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                  {totalItems}
-                </span>
+            <div className="relative">
+              <button
+                type="button"
+                className="relative text-primary hover:text-primary-hover transition-colors ml-2"
+                onClick={() => setShowCartModal((v) => !v)}
+              >
+                <ShoppingCart className="w-6 h-6" />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-2 bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                    {totalItems}
+                  </span>
+                )}
+              </button>
+              {/* Dropdown do Carrinho */}
+              {showCartModal && (
+                <>
+                  {/* Overlay só no mobile */}
+                  <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setShowCartModal(false)} />
+                  <div
+                    className="z-50 animate-in fade-in slide-in-from-top-2 duration-200 border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col p-6
+                    fixed left-1/2 top-1/2 w-[95vw] max-w-sm -translate-x-1/2 -translate-y-1/2
+                    md:absolute md:right-0 md:top-full md:mt-2 md:w-80 md:max-w-xs md:left-auto md:translate-x-0 md:translate-y-0"
+                  >
+                    <h2 className="text-lg font-bold mb-4 text-gray-800 dark:text-white text-center">Meu Carrinho</h2>
+                    <div className="flex flex-col gap-3 mb-4 max-h-60 md:max-h-none md:overflow-y-visible overflow-y-auto">
+                      {items.length === 0 ? (
+                        <span className="text-center text-gray-400">Seu carrinho está vazio.</span>
+                      ) : (
+                        items.map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-3 border-b pb-2 last:border-b-0">
+                            <img src={item.image} alt={item.name} className="w-14 h-14 rounded-lg object-cover border" />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-bold text-sm text-gray-800 dark:text-white truncate">{item.name}</div>
+                              <div className="flex flex-wrap gap-2 text-xs text-gray-500 mt-1">
+                                <span>Cor: <span className="font-semibold text-gray-700 dark:text-gray-200">{item.color}</span></span>
+                                <span>Tam: <span className="font-semibold text-gray-700 dark:text-gray-200">{item.size}</span></span>
+                              </div>
+                              <div className="flex flex-wrap gap-2 text-xs text-gray-500 mt-1">
+                                <span>Qtd: <span className="font-semibold text-gray-700 dark:text-gray-200">{item.quantity}</span></span>
+                                <span>Unit: <span className="font-semibold text-primary">R$ {item.price.toFixed(2)}</span></span>
+                              </div>
+                              <div className="text-xs text-gray-400 line-through">R$ {item.originalPrice?.toFixed(2)}</div>
+                              <div className="text-sm font-bold text-primary mt-1">Total: R$ {(item.price * item.quantity).toFixed(2)}</div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="font-bold text-gray-700 dark:text-white">Valor total:</span>
+                      <span className="font-bold text-lg text-primary">R$ {subtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <button
+                        className="flex-1 text-sm text-gray-500 underline hover:text-primary px-2 py-2"
+                        onClick={() => { clearCart(); }}
+                        disabled={items.length === 0}
+                      >
+                        Esvaziar
+                      </button>
+                      <button
+                        className="px-4 py-2 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary-hover transition-colors"
+                        style={{ minWidth: '110px' }}
+                        onClick={() => { setShowCartModal(false); navigate('/carrinho'); }}
+                        disabled={items.length === 0}
+                      >
+                        Ver Carrinho
+                      </button>
+                    </div>
+                  </div>
+                </>
               )}
-            </Link>
+            </div>
+                {/* Modal do Carrinho */}
+                {/* O modal global foi removido, agora é dropdown no ícone do carrinho */}
           </div>
         </div>
 

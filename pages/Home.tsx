@@ -490,10 +490,10 @@ const Home: React.FC = () => {
 
               return (
                 <Link key={idx} to={`/produtos?categoria=${cat.name}`} className="group flex flex-col items-center gap-4 transition-all">
-                  <div className="w-24 h-24 rounded-full bg-white dark:bg-gray-800 shadow-[0_4px_25px_rgba(0,0,0,0.05)] dark:shadow-2xl flex items-center justify-center transition-all group-hover:shadow-xl group-hover:-translate-y-2 dark:border dark:border-gray-700">
-                    <img src={iconSrc} alt={cat.name} className="w-12 h-12 object-contain opacity-80 group-hover:opacity-100 transition-opacity" />
+                  <div className="w-24 h-24 rounded-full bg-white dark:bg-gray-800 shadow-[0_4px_25px_rgba(0,0,0,0.05)] dark:shadow-2xl flex items-center justify-center transition-all duration-300 group-hover:bg-white group-hover:shadow-2xl group-hover:shadow-primary/20 group-hover:-translate-y-2 border-2 border-transparent group-hover:border-primary dark:border-gray-700 dark:group-hover:border-primary">
+                    <img src={iconSrc} alt={cat.name} className="w-12 h-12 object-contain opacity-80 group-hover:opacity-100 transition-all duration-300 group-hover:scale-110 group-hover:brightness-125" />
                   </div>
-                  <span className="text-sm font-bold text-[#474747] dark:text-gray-300 group-hover:text-primary transition-colors">{cat.name}</span>
+                  <span className="text-sm font-bold text-[#474747] dark:text-gray-300 group-hover:text-primary transition-colors duration-300">{cat.name}</span>
                 </Link>
               );
             })}
