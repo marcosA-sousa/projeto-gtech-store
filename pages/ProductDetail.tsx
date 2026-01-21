@@ -622,9 +622,6 @@ const ProductDetail: React.FC = () => {
                 alt={product.name}
                 
                 className="object-cover object-center w-full h-full mix-blend-multiply dark:mix-blend-normal hover:scale-105 transition-transform duration-500 ease-out"
-=======
-                className="object-contain w-3/4 mix-blend-multiply dark:mix-blend-normal hover:scale-105 transition-transform duration-500 ease-out"
-
                 src={uniqueGallery[activeImageIndex]}
               />
             </div>
