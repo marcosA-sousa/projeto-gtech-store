@@ -218,8 +218,8 @@ const Cart: React.FC = () => {
                 {items.map((item) => (
                   <div key={item.id} className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center py-4 border-b border-gray-50 dark:border-gray-800">
                     <div className="md:col-span-6 flex gap-4">
-                      <div className="w-20 h-20 bg-[#E2E3FF]/30 dark:bg-gray-800 rounded-xl flex items-center justify-center p-2 flex-shrink-0">
-                        <img alt={item.name} className="object-contain w-full h-full mix-blend-multiply dark:mix-blend-normal" src={item.image} />
+                      <div className="w-20 h-20 bg-[#E2E3FF]/30 dark:bg-gray-800 rounded-xl flex items-center justify-center p-2 flex-shrink-0 overflow-hidden">
+                        <img alt={item.name} className="object-cover object-center w-full h-full mix-blend-multiply dark:mix-blend-normal" src={item.image} />
                       </div>
                       <div className="flex flex-col justify-center">
                         <h3 className="font-bold text-gray-800 dark:text-white text-md leading-tight">{item.name}</h3>

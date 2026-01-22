@@ -620,7 +620,11 @@ const ProductDetail: React.FC = () => {
               )}
               <img
                 alt={product.name}
+                
+                className="object-cover object-center w-full h-full mix-blend-multiply dark:mix-blend-normal hover:scale-105 transition-transform duration-500 ease-out"
+=======
                 className="object-contain w-3/4 mix-blend-multiply dark:mix-blend-normal hover:scale-105 transition-transform duration-500 ease-out"
+
                 src={uniqueGallery[activeImageIndex]}
               />
             </div>
@@ -632,7 +636,7 @@ const ProductDetail: React.FC = () => {
                   onClick={() => setActiveImageIndex(i)}
                   className={`aspect-square bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center p-2 border-2 transition-all ${activeImageIndex === i ? 'border-primary ring-4 ring-primary/10' : 'border-gray-50 dark:border-gray-700 hover:border-primary/50 opacity-60 hover:opacity-100'}`}
                 >
-                  <img alt={`Thumbnail ${i}`} className="object-contain w-full h-full mix-blend-multiply dark:mix-blend-normal" src={img} />
+                  <img alt={`Thumbnail ${i}`} className="object-cover object-center w-full h-full mix-blend-multiply dark:mix-blend-normal" src={img} />
                 </button>
               ))}
             </div>
