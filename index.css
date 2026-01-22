@@ -1,3 +1,4 @@
+
 /* Configuração da View Transition*/
 ::view-transition-old(root),
 ::view-transition-new(root) {
@@ -40,7 +41,6 @@
 html.transitioning * {
     transition: none !important;
 }
-
 html:not(.transitioning) {
     transition: background-color 0.2s ease, color 0.2s ease;
 }
