@@ -133,10 +133,10 @@ const ProductDetail: React.FC = () => {
                   {product.discount}
                 </span>
               )}
-              <img
-                alt={product.name}
-                className="object-contain w-3/4 mix-blend-multiply dark:mix-blend-normal hover:scale-105 transition-transform duration-500 ease-out"
-                src={uniqueGallery[activeImageIndex]}
+              <img 
+                alt={product.name} 
+                className="object-contain w-3/4 mix-blend-multiply dark:mix-blend-normal hover:scale-105 transition-transform duration-500 ease-out" 
+                src={uniqueGallery[activeImageIndex]} 
               />
             </div>
 
