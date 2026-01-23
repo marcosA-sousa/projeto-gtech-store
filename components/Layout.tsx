@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, NavLink, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, User, Sun, Moon, LogOut, Package, ChevronDown, ArrowRight, Settings, Menu, X } from 'lucide-react';
+import { Search, ShoppingCart, User, Sun, Moon, LogOut, Package, ChevronDown, ArrowRight, Settings, Menu, X, Heart } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useProducts } from '../contexts/ProductContext';
@@ -55,6 +55,8 @@ const DarkModeToggle = () => {
   return (
     <button
       onClick={toggleTheme}
+      title={isDark ? "Mudar para modo claro" : "Mudar para modo escuro"}
+      aria-label={isDark ? "Ativar tema claro" : "Ativar tema escuro"}
       className="fixed top-4 right-4 z-[100] w-9 h-9 rounded-full bg-white dark:bg-gray-800 shadow-xl flex items-center justify-center border border-gray-100 dark:border-gray-700 hover:scale-110 active:scale-95 transition-all text-gray-600 dark:text-yellow-400"
     >
       {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -238,6 +240,16 @@ const Layout: React.FC = () => {
                     >
                       <Package className="w-4 h-4 text-primary" />
                       Meus Pedidos
+                    </Link>
+                    <Link
+                      to="/favoritos"
+                      onClick={() => setShowProfileMenu(false)}
+                      title="Ver favoritos"
+                      aria-label="Ir para página de favoritos"
+                      className="flex items-center gap-3 px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <Heart className="w-4 h-4 text-red-500" aria-hidden="true" />
+                      Favoritos
                     </Link>
                     <button
                       onClick={() => { logout(); setShowProfileMenu(false); }}

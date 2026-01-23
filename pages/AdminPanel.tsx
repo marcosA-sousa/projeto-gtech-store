@@ -447,45 +447,52 @@ const AdminPanel: React.FC = () => {
 
             <h1 className="text-4xl font-black text-gray-800 dark:text-white uppercase tracking-tighter">Painel Administrativo</h1>
             <p className="text-gray-500 dark:text-gray-400 font-medium">Gestão centralizada de performance e inventário em tempo real.</p>
-=======
-            <h1 className="text-4xl font-black text-gray-800 dark:text-white uppercase tracking-tighter">Painel de Admin</h1>
-            <p className="text-gray-500 dark:text-gray-400 font-medium">Gestão centralizada de performance e inventário.</p>
           </div>
 
           <div className="flex items-center bg-white dark:bg-gray-900 p-1.5 rounded-2xl shadow-sm border dark:border-gray-800">
             <button
               onClick={() => setActiveTab('inventory')}
+              title="Ir para inventário"
+              aria-label="Aba de inventário e produtos"
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'inventory' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
             >
-              <Box className="w-4 h-4" />
+              <Box className="w-4 h-4" aria-hidden="true" />
               Inventário
             </button>
             <button
               onClick={() => setActiveTab('dashboard')}
+              title="Ir para dashboard"
+              aria-label="Aba de análises e métricas"
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'dashboard' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
             >
-              <LayoutDashboard className="w-4 h-4" />
+              <LayoutDashboard className="w-4 h-4" aria-hidden="true" />
               Dashboard
             </button>
             <button
               onClick={() => setActiveTab('hero')}
+              title="Ir para slides hero"
+              aria-label="Aba de banners e slides principais"
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'hero' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
             >
-              <ImageIcon className="w-4 h-4" />
+              <ImageIcon className="w-4 h-4" aria-hidden="true" />
               Hero
             </button>
             <button
               onClick={() => setActiveTab('customers')}
+              title="Ir para clientes"
+              aria-label="Aba de gerenciamento de clientes"
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'customers' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
             >
-              <Users className="w-4 h-4" />
+              <Users className="w-4 h-4" aria-hidden="true" />
               Clientes
             </button>
             <button
               onClick={() => setActiveTab('orders')}
+              title="Ir para pedidos"
+              aria-label="Aba de gerenciamento de pedidos"
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'orders' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
             >
-              <ShoppingBag className="w-4 h-4" />
+              <ShoppingBag className="w-4 h-4" aria-hidden="true" />
               Pedidos
             </button>
           </div>
@@ -496,16 +503,20 @@ const AdminPanel: React.FC = () => {
                 setNewCoupon({ code: '', discountPercent: '', type: 'product', isFreeShipping: false, stackable: true });
                 setIsCouponModalOpen(true);
               }}
+              title="Criar novo cupom de desconto"
+              aria-label="Abrir formulário para criar novo cupom de desconto ou promoção"
               className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-orange-500/30 transition-all active:scale-95"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-5 h-5" aria-hidden="true" />
               Novo Cupom
             </button>
             <button
               onClick={() => { resetProductForm(); setIsProductModalOpen(true); }}
+              title="Cadastrar novo produto"
+              aria-label="Abrir formulário para cadastrar novo produto na loja"
               className="bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary/30 transition-all active:scale-95"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-5 h-5" aria-hidden="true" />
               Novo Produto
             </button>
           </div>

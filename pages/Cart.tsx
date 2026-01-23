@@ -229,11 +229,32 @@ const Cart: React.FC = () => {
 
                     <div className="md:col-span-2 flex flex-col items-center">
                       <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg h-8 bg-white dark:bg-gray-800">
-                        <button onClick={() => updateQuantity(item.id, -1)} className="px-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><Minus className="w-3 h-3" /></button>
-                        <span className="px-3 font-bold text-gray-700 dark:text-gray-200 text-xs">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.id, 1)} className="px-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><Plus className="w-3 h-3" /></button>
+                        <button 
+                          onClick={() => updateQuantity(item.id, -1)} 
+                          title="Diminuir quantidade"
+                          aria-label={`Remover uma unidade de ${item.name}`}
+                          className="px-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          <Minus className="w-3 h-3" aria-hidden="true" />
+                        </button>
+                        <span className="px-3 font-bold text-gray-700 dark:text-gray-200 text-xs" aria-label={`Quantidade: ${item.quantity}`}>{item.quantity}</span>
+                        <button 
+                          onClick={() => updateQuantity(item.id, 1)} 
+                          title="Aumentar quantidade"
+                          aria-label={`Adicionar mais uma unidade de ${item.name}`}
+                          className="px-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          <Plus className="w-3 h-3" aria-hidden="true" />
+                        </button>
                       </div>
-                      <button onClick={() => removeItem(item.id)} className="text-[10px] text-red-400 font-bold mt-1 hover:underline">Remover</button>
+                      <button 
+                        onClick={() => removeItem(item.id)} 
+                        title="Remover este item do carrinho"
+                        aria-label={`Remover ${item.name} do carrinho`}
+                        className="text-[10px] text-red-400 font-bold mt-1 hover:underline"
+                      >
+                        Remover
+                      </button>
                     </div>
 
                     <div className="md:col-span-2 text-center">
@@ -252,7 +273,7 @@ const Cart: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10 pt-6 border-t border-gray-50 dark:border-gray-800">
                   <div>
                     <h4 className="font-bold text-gray-700 dark:text-gray-300 text-xs mb-4 flex items-center gap-2 uppercase tracking-widest">
-                      <Tag className="w-4 h-4 text-primary" /> Cupom de desconto
+                      <Tag className="w-4 h-4 text-primary" aria-hidden="true" /> Cupom de desconto
                     </h4>
                     {!appliedCoupon ? (
                       <div className="space-y-2">
